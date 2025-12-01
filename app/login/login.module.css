@@ -1,0 +1,119 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: radial-gradient(circle at 50% 50%, rgba(0, 124, 240, 0.05) 0%, transparent 50%);
+}
+
+.form {
+    width: 100%;
+    max-width: 400px;
+    padding: 3rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 480px) {
+    .form {
+        padding: 2rem;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .container {
+        padding: 1rem;
+        align-items: flex-start;
+        padding-top: 6rem;
+        /* Space for fixed header */
+    }
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    background: linear-gradient(90deg, #007CF0, #00DFD8);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.inputGroup {
+    margin-bottom: 1.5rem;
+}
+
+.inputGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #888;
+}
+
+.inputGroup input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: inherit;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.inputGroup input:focus {
+    outline: none;
+    border-color: #007CF0;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.primaryBtn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: linear-gradient(90deg, #007CF0, #00DFD8);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.primaryBtn:hover {
+    opacity: 0.9;
+}
+
+.secondaryBtn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.secondaryBtn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.error {
+    margin-top: 1rem;
+    color: #ff4444;
+    text-align: center;
+    font-size: 0.9rem;
+}
