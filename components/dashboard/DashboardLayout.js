@@ -2,8 +2,6 @@
 import { useState } from 'react';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
 
 export default function DashboardLayout({ children, user, profile }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -26,11 +24,6 @@ export default function DashboardLayout({ children, user, profile }) {
                     {children}
                 </div>
             </main>
-
-            {/* Floating Action Button */}
-            <Link href="/cv-builder/create" className="fab" title="Create New CV">
-                <Plus className="w-6 h-6" />
-            </Link>
         </div>
     );
 }

@@ -1,6 +1,34 @@
 'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function CTA({ onOpenSignup }) {
+    const [user, setUser] = useState(null);
+    const router = useRouter();
+    const supabase = createClient();
+
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        getUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, [supabase.auth]);
+
+    const handleCTAClick = () => {
+        if (user) {
+            router.push('/cv-builder/create');
+        } else {
+            onOpenSignup();
+        }
+    };
     return (
         <section className="py-24 relative">
             <div className="max-w-4xl mx-auto px-6 text-center scroll-reveal">
@@ -17,7 +45,7 @@ export default function CTA({ onOpenSignup }) {
                             Stop scrolling job boards. Let AI work for you. Start building your future today—it's free.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <button onClick={onOpenSignup} className="btn-primary px-10 py-4 rounded-2xl font-semibold text-lg">
+                            <button onClick={handleCTAClick} className="btn-primary px-10 py-4 rounded-2xl font-semibold text-lg">
                                 Create Your Free CV Now
                             </button>
                         </div>

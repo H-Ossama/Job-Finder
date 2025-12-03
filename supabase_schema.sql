@@ -27,11 +27,19 @@ create table cvs (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users on delete cascade not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()),
   title text not null,
   content jsonb, -- Store structured CV data
+  template text default 'modern', -- Template ID (modern, professional, creative, etc.)
+  ats_score integer default 0, -- ATS compatibility score 0-100
+  ats_analysis jsonb, -- Detailed ATS analysis results
   original_file_url text, -- If uploaded
   is_primary boolean default false
 );
+
+-- Create index for faster queries
+create index cvs_user_id_idx on cvs(user_id);
+create index cvs_template_idx on cvs(template);
 
 alter table cvs enable row level security;
 

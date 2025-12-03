@@ -1,6 +1,42 @@
 'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function Pricing({ onOpenSignup }) {
+    const [user, setUser] = useState(null);
+    const router = useRouter();
+    const supabase = createClient();
+
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        getUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, [supabase.auth]);
+
+    const handleGetStarted = () => {
+        if (user) {
+            router.push('/cv-builder/create');
+        } else {
+            onOpenSignup();
+        }
+    };
+
+    const handleStartTrial = () => {
+        if (user) {
+            router.push('/billing');
+        } else {
+            onOpenSignup();
+        }
+    };
     return (
         <section id="pricing" className="py-24 relative">
             <div className="max-w-7xl mx-auto px-6">
@@ -34,7 +70,7 @@ export default function Pricing({ onOpenSignup }) {
                                 Basic job matches
                             </li>
                         </ul>
-                        <button onClick={onOpenSignup} className="w-full py-3 rounded-xl border border-white/20 hover:bg-white/5 transition font-medium">Get Started</button>
+                        <button onClick={handleGetStarted} className="w-full py-3 rounded-xl border border-white/20 hover:bg-white/5 transition font-medium">Get Started</button>
                     </div>
 
                     {/* Pro Tier */}
@@ -66,7 +102,7 @@ export default function Pricing({ onOpenSignup }) {
                                     Interview prep guides
                                 </li>
                             </ul>
-                            <button onClick={onOpenSignup} className="btn-primary w-full py-3 rounded-xl font-medium">Start Free Trial</button>
+                            <button onClick={handleStartTrial} className="btn-primary w-full py-3 rounded-xl font-medium">Start Free Trial</button>
                         </div>
                     </div>
 

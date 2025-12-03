@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { calculateCompleteness } from '@/utils/cv/templates'
 
 /**
  * Save a new CV to the database
@@ -16,12 +17,17 @@ export async function saveCV(cvData) {
         throw new Error('User not authenticated')
     }
 
+    // Calculate completeness score
+    const completeness = calculateCompleteness(cvData.content || {})
+
     const { data, error } = await supabase
         .from('cvs')
         .insert({
             user_id: user.id,
             title: cvData.title,
             content: cvData.content,
+            template: cvData.template || 'modern',
+            ats_score: cvData.ats_score || completeness.score,
             is_primary: cvData.is_primary || false
         })
         .select()
@@ -33,6 +39,7 @@ export async function saveCV(cvData) {
     }
 
     revalidatePath('/dashboard')
+    revalidatePath('/resumes')
     return data
 }
 
@@ -48,12 +55,18 @@ export async function updateCV(id, cvData) {
         throw new Error('User not authenticated')
     }
 
+    // Calculate completeness score
+    const completeness = calculateCompleteness(cvData.content || {})
+
     const { data, error } = await supabase
         .from('cvs')
         .update({
             title: cvData.title,
             content: cvData.content,
-            is_primary: cvData.is_primary
+            template: cvData.template,
+            ats_score: cvData.ats_score || completeness.score,
+            is_primary: cvData.is_primary,
+            updated_at: new Date().toISOString()
         })
         .eq('id', id)
         .eq('user_id', user.id)
@@ -66,6 +79,7 @@ export async function updateCV(id, cvData) {
     }
 
     revalidatePath('/dashboard')
+    revalidatePath('/resumes')
     revalidatePath(`/cv-builder/edit/${id}`)
     return data
 }
@@ -94,6 +108,7 @@ export async function deleteCV(id) {
     }
 
     revalidatePath('/dashboard')
+    revalidatePath('/resumes')
 }
 
 /**
@@ -146,6 +161,124 @@ export async function getCV(id) {
         throw new Error('CV not found')
     }
 
+    return data
+}
+
+/**
+ * Set a CV as primary (main CV)
+ */
+export async function setPrimaryCV(id) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        throw new Error('User not authenticated')
+    }
+
+    // First, unset all other CVs as primary
+    await supabase
+        .from('cvs')
+        .update({ is_primary: false })
+        .eq('user_id', user.id)
+
+    // Set the selected CV as primary
+    const { data, error } = await supabase
+        .from('cvs')
+        .update({ is_primary: true })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Error setting primary CV:', error)
+        throw new Error('Failed to set primary CV')
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/resumes')
+    return data
+}
+
+/**
+ * Duplicate a CV
+ */
+export async function duplicateCV(id) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        throw new Error('User not authenticated')
+    }
+
+    // Get the original CV
+    const { data: original, error: fetchError } = await supabase
+        .from('cvs')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single()
+
+    if (fetchError || !original) {
+        throw new Error('CV not found')
+    }
+
+    // Create a copy
+    const { data, error } = await supabase
+        .from('cvs')
+        .insert({
+            user_id: user.id,
+            title: `${original.title} (Copy)`,
+            content: original.content,
+            template: original.template,
+            ats_score: original.ats_score,
+            is_primary: false
+        })
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Error duplicating CV:', error)
+        throw new Error('Failed to duplicate CV')
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/resumes')
+    return data
+}
+
+/**
+ * Update CV ATS score
+ */
+export async function updateATSScore(id, score, analysis) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        throw new Error('User not authenticated')
+    }
+
+    const { data, error } = await supabase
+        .from('cvs')
+        .update({
+            ats_score: score,
+            ats_analysis: analysis,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Error updating ATS score:', error)
+        throw new Error('Failed to update ATS score')
+    }
+
+    revalidatePath(`/cv-builder/edit/${id}`)
     return data
 }
 

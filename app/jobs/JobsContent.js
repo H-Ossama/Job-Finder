@@ -78,8 +78,8 @@ const autoAppliedJobs = [
         salary: '$140,000 - $180,000 / year',
         status: 'auto-applied',
         appliedAt: 'Applied 2 days ago',
-        resumeUsed: 'Frontend_Developer_2024',
-        aiSummary: 'Used your "Frontend_Developer_2024" resume. Tailored cover letter highlighting React and TypeScript experience.'
+        resumeUsed: 'Frontend_Developer_2025',
+        aiSummary: 'Used your "Frontend_Developer_2025" resume. Tailored cover letter highlighting React and TypeScript experience.'
     },
     {
         id: 'airbnb',
@@ -90,7 +90,7 @@ const autoAppliedJobs = [
         salary: '$175,000 - $225,000 / year',
         status: 'interview',
         appliedAt: 'Applied 5 days ago',
-        interviewDate: 'March 15, 2024 at 2:00 PM PST',
+        interviewDate: 'March 15, 2025 at 2:00 PM PST',
         interviewType: 'Technical screening with hiring manager'
     },
     {

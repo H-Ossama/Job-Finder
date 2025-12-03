@@ -19,7 +19,7 @@ import {
 const sampleResumes = [
     {
         id: 1,
-        title: 'Frontend Developer 2024',
+        title: 'Frontend Developer 2025',
         lastEdited: '2 hours ago',
         atsScore: 84,
         skills: ['React', 'TypeScript', '+3'],

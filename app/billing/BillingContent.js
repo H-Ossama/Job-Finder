@@ -116,21 +116,21 @@ const BILLING_HISTORY = [
     },
     {
         id: 2,
-        date: 'Dec 15, 2024',
+        date: 'Dec 15, 2025',
         description: 'Pro Plan - Monthly',
         amount: 19.00,
         status: 'paid'
     },
     {
         id: 3,
-        date: 'Nov 15, 2024',
+        date: 'Nov 15, 2025',
         description: 'Pro Plan - Monthly',
         amount: 19.00,
         status: 'paid'
     },
     {
         id: 4,
-        date: 'Oct 15, 2024',
+        date: 'Oct 15, 2025',
         description: 'Pro Plan - Monthly',
         amount: 19.00,
         status: 'paid'

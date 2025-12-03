@@ -1,0 +1,229 @@
+/* Section Reorder Styles */
+
+.sectionReorder {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.header {
+    margin-bottom: 24px;
+}
+
+.title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subtitle {
+    color: #9ca3af;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.sectionList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sectionItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: grab;
+    transition: all 0.2s ease;
+}
+
+.sectionItem:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(168, 85, 247, 0.3);
+}
+
+.sectionItem:active {
+    cursor: grabbing;
+}
+
+.sectionItem.hidden {
+    opacity: 0.5;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.dragHandle {
+    color: #6b7280;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+}
+
+.sectionItem:active .dragHandle {
+    cursor: grabbing;
+}
+
+.sectionInfo {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.sectionOrder {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.sectionItem.hidden .sectionOrder {
+    background: linear-gradient(135deg, #4b5563, #6b7280);
+}
+
+.sectionDetails {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sectionName {
+    font-size: 0.938rem;
+    font-weight: 500;
+    color: white;
+}
+
+.sectionItem.hidden .sectionName {
+    color: #9ca3af;
+    text-decoration: line-through;
+}
+
+.requiredBadge {
+    padding: 2px 8px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #f87171;
+    font-weight: 500;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.arrowButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.arrowBtn {
+    width: 28px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.arrowBtn:hover:not(:disabled) {
+    background: rgba(168, 85, 247, 0.2);
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #c084fc;
+}
+
+.arrowBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.visibilityBtn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.visibilityBtn:hover {
+    background: rgba(168, 85, 247, 0.2);
+    border-color: rgba(168, 85, 247, 0.4);
+    color: #c084fc;
+}
+
+.helpText {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.helpText p {
+    color: #9ca3af;
+    font-size: 0.813rem;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.helpText strong {
+    color: #c084fc;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sectionReorder {
+        padding: 16px;
+    }
+
+    .sectionItem {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .sectionInfo {
+        gap: 12px;
+    }
+
+    .sectionOrder {
+        width: 28px;
+        height: 28px;
+        font-size: 0.813rem;
+    }
+
+    .sectionName {
+        font-size: 0.875rem;
+    }
+
+    .actions {
+        gap: 6px;
+    }
+}

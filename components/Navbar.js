@@ -140,8 +140,11 @@ export default function Navbar({ onOpenSignin, onOpenSignup }) {
                                             <a href="/dashboard" className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition">
                                                 Dashboard
                                             </a>
-                                            <a href="/cv-builder" className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition">
+                                            <a href="/cv-builder/create" className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition">
                                                 CV Builder
+                                            </a>
+                                            <a href="/job-search" className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 transition">
+                                                Job Search
                                             </a>
                                             <hr className="my-2 border-white/10" />
                                             <button 
@@ -200,7 +203,8 @@ export default function Navbar({ onOpenSignin, onOpenSignup }) {
                 {user ? (
                     <>
                         <a href="/dashboard" onClick={closeMobileMenu}>Dashboard</a>
-                        <a href="/cv-builder" onClick={closeMobileMenu}>CV Builder</a>
+                        <a href="/cv-builder/create" onClick={closeMobileMenu}>CV Builder</a>
+                        <a href="/job-search" onClick={closeMobileMenu}>Job Search</a>
                         <button 
                             className="text-red-400 hover:text-red-300 transition mt-4" 
                             onClick={() => { closeMobileMenu(); handleSignOut(); }}

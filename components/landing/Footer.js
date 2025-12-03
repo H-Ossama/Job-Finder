@@ -62,7 +62,7 @@ export default function Footer() {
                 <div className="line-decoration mb-8"></div>
 
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
-                    <p>© 2024 CareerForge.ai. All rights reserved.</p>
+                    <p>© 2025 CareerForge.ai. All rights reserved.</p>
                     <p>Built with ❤️ for job seekers everywhere</p>
                 </div>
             </div>

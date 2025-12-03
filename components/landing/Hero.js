@@ -1,13 +1,33 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function Hero({ onOpenSignup }) {
     const [text, setText] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
     const [loopNum, setLoopNum] = useState(0);
     const [typingSpeed, setTypingSpeed] = useState(150);
+    const [user, setUser] = useState(null);
+    const router = useRouter();
+    const supabase = createClient();
 
     const phrases = ['AI', 'Intelligence', 'Automation', 'Machine Learning'];
+
+    // Check for authenticated user
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        getUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, [supabase.auth]);
 
     useEffect(() => {
         const handleTyping = () => {
@@ -29,6 +49,14 @@ export default function Hero({ onOpenSignup }) {
         const timer = setTimeout(handleTyping, typingSpeed);
         return () => clearTimeout(timer);
     }, [text, isDeleting, loopNum, typingSpeed, phrases]);
+
+    const handleCTAClick = () => {
+        if (user) {
+            router.push('/cv-builder/create');
+        } else {
+            onOpenSignup();
+        }
+    };
 
     return (
         <section className="relative min-h-screen hero-gradient flex items-center pt-24 pb-16 overflow-hidden">
@@ -65,7 +93,7 @@ export default function Hero({ onOpenSignup }) {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-                            <button onClick={onOpenSignup} className="btn-primary px-8 py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 group">
+                            <button onClick={handleCTAClick} className="btn-primary px-8 py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 group">
                                 Build Your CV Now
                                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />

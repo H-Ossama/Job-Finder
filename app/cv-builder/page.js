@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { FileText, Upload, PlusCircle } from 'lucide-react'
+import { FileText, Upload, Sparkles } from 'lucide-react'
 import styles from './cv-builder.module.css'
 
 export default async function CVBuilder() {
@@ -22,7 +22,7 @@ export default async function CVBuilder() {
             <div className={styles.optionsGrid}>
                 <Link href="/cv-builder/create" className={styles.optionCard}>
                     <div className={styles.iconWrapper}>
-                        <PlusCircle size={48} />
+                        <Sparkles size={48} />
                     </div>
                     <h2 className={styles.optionTitle}>Create from Scratch</h2>
                     <p className={styles.optionDescription}>

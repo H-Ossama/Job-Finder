@@ -16,7 +16,6 @@ export async function POST(request) {
         let result;
 
         switch (action) {
-            case 'generate':
             case 'summary':
                 // Generate professional summary
                 result = await generateProfessionalSummary(params);
@@ -67,7 +66,7 @@ export async function POST(request) {
 
             default:
                 return NextResponse.json(
-                    { error: 'Invalid action. Valid actions: summary, generate, improve, bullets, ats-analyze, extract-keywords, tailor' },
+                    { error: 'Invalid action. Valid actions: summary, improve, bullets, ats-analyze, extract-keywords, tailor' },
                     { status: 400 }
                 );
         }
@@ -89,6 +88,6 @@ export async function GET() {
     return NextResponse.json({
         status: 'ok',
         service: 'CV AI Assistant',
-        actions: ['summary', 'generate', 'improve', 'bullets', 'ats-analyze', 'extract-keywords', 'tailor']
+        actions: ['summary', 'improve', 'bullets', 'ats-analyze', 'extract-keywords', 'tailor']
     });
 }

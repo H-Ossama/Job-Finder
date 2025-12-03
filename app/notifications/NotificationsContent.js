@@ -163,18 +163,26 @@ export default function NotificationsContent({ user, profile }) {
     const [activeTab, setActiveTab] = useState('all');
     const [menuOpen, setMenuOpen] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
     const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url || null;
     const userInitial = userName.charAt(0).toUpperCase();
 
-    // Load notifications from localStorage on mount
+    // Load notifications from localStorage on mount with loading effect
     useEffect(() => {
-        const stored = getStoredNotifications();
-        if (stored) {
-            setNotifications(stored);
-        }
-        setIsLoaded(true);
+        const loadNotifications = async () => {
+            setIsLoading(true);
+            // Simulate loading delay for smooth UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const stored = getStoredNotifications();
+            if (stored) {
+                setNotifications(stored);
+            }
+            setIsLoaded(true);
+            setIsLoading(false);
+        };
+        loadNotifications();
     }, []);
 
     // Save notifications to localStorage whenever they change
@@ -298,7 +306,12 @@ export default function NotificationsContent({ user, profile }) {
 
                     {/* Notifications List */}
                     <div className={styles.notificationsList}>
-                        {filteredNotifications.length === 0 ? (
+                        {isLoading ? (
+                            <div className={styles.loadingState}>
+                                <div className={styles.loadingSpinner}></div>
+                                <p>Loading notifications...</p>
+                            </div>
+                        ) : filteredNotifications.length === 0 ? (
                             <div className={styles.emptyState}>
                                 <Bell className="w-12 h-12" />
                                 <h3>No notifications</h3>

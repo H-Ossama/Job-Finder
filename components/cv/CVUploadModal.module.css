@@ -1,0 +1,244 @@
+/* CV Upload Modal Styles */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modalContent {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    max-width: 800px;
+    width: 100%;
+    padding: 48px;
+    position: relative;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: rotate(90deg);
+}
+
+.modalHeader {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.modalTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    color: white;
+}
+
+.modalSubtitle {
+    color: #9ca3af;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.optionsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.optionCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.optionCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.optionCard:hover::before {
+    opacity: 1;
+}
+
+.optionCard:hover {
+    border-color: rgba(168, 85, 247, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.2);
+}
+
+.optionCard:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.optionCard:disabled:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+}
+
+.optionIcon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    position: relative;
+    z-index: 1;
+}
+
+.optionTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 12px 0;
+    position: relative;
+    z-index: 1;
+}
+
+.optionDesc {
+    color: #9ca3af;
+    margin: 0 0 16px 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+}
+
+.optionBadge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 100px;
+    font-size: 0.75rem;
+    color: #c084fc;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+}
+
+.fileInput {
+    display: none;
+}
+
+.featuresList {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modalContent {
+        padding: 32px 24px;
+    }
+
+    .modalTitle {
+        font-size: 1.5rem;
+    }
+
+    .optionsGrid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .optionCard {
+        padding: 24px 20px;
+    }
+
+    .optionIcon {
+        width: 64px;
+        height: 64px;
+    }
+
+    .optionTitle {
+        font-size: 1.125rem;
+    }
+
+    .featuresList {
+        gap: 16px;
+        flex-direction: column;
+        align-items: center;
+    }
+}
