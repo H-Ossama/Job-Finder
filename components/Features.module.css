@@ -1,69 +1,97 @@
 .features {
-    padding: 8rem 2rem;
-    background: #fff;
-    color: #000;
+    padding: 6rem 2rem;
+    background: var(--surface);
 }
 
-@media (prefers-color-scheme: dark) {
-    .features {
-        background: #000;
-        color: #fff;
-    }
-}
-
-.title {
-    text-align: center;
-    font-size: 3rem;
-    font-weight: 700;
-    margin-bottom: 4rem;
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+.container {
     max-width: 1200px;
     margin: 0 auto;
 }
 
+.header {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.title {
+    font-size: var(--font-size-4xl);
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.description {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
 .card {
     padding: 2rem;
-    border-radius: 1rem;
-    background: rgba(128, 128, 128, 0.05);
-    border: 1px solid rgba(128, 128, 128, 0.1);
+    border-radius: var(--radius-lg);
+    background: var(--background);
+    border: 1px solid var(--border);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px var(--shadow);
 }
 
 .iconWrapper {
-    width: 3rem;
-    height: 3rem;
+    width: 3.5rem;
+    height: 3.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #007CF0, #00DFD8);
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
     margin-bottom: 1.5rem;
 }
 
 .cardTitle {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .cardDesc {
-    color: #666;
+    color: var(--text-secondary);
     line-height: 1.6;
+    font-size: var(--font-size-base);
 }
 
-@media (prefers-color-scheme: dark) {
-    .cardDesc {
-        color: #aaa;
+@media (max-width: 768px) {
+    .features {
+        padding: 4rem 1.5rem;
+    }
+
+    .header {
+        margin-bottom: 3rem;
+    }
+
+    .title {
+        font-size: var(--font-size-3xl);
+    }
+
+    .description {
+        font-size: var(--font-size-base);
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .card {
+        padding: 1.5rem;
     }
 }

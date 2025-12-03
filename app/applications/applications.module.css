@@ -1,0 +1,212 @@
+/* Applications Page Styles */
+
+.statCard {
+    text-align: center;
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.3s ease;
+}
+
+.statCard:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.filterBtn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #9ca3af;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.filterBtn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.filterBtnActive {
+    color: #fff;
+    background: linear-gradient(135deg, 
+        hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2) 0%, 
+        hsla(var(--secondary-h), var(--secondary-s), var(--secondary-l), 0.2) 100%);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
+}
+
+.applicationCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.applicationCard:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.applicationCardExpanded {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+}
+
+.expandedContent {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.timelineSection {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    padding-left: 24px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.timelineItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.timelineDot {
+    position: absolute;
+    left: -24px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    background: var(--gradient-start);
+}
+
+.timelineDotCompleted {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 2px solid #22c55e;
+}
+
+.timelineDotCurrent {
+    background: linear-gradient(135deg, 
+        hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3) 0%, 
+        hsla(var(--secondary-h), var(--secondary-s), var(--secondary-l), 0.3) 100%);
+    color: var(--accent-color);
+    border: 2px solid var(--accent-color);
+    animation: pulse 2s infinite;
+}
+
+.timelineDotUpcoming {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    border: 2px solid #a855f7;
+}
+
+.timelineDotPending {
+    background: rgba(107, 114, 128, 0.2);
+    color: #6b7280;
+    border: 2px solid #6b7280;
+}
+
+.timelineDotRejected {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 2px solid #ef4444;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0);
+    }
+}
+
+.timelineContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.offerCard {
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .applicationCard {
+        padding: 16px;
+    }
+
+    .statusBadge {
+        font-size: 0.65rem;
+        padding: 4px 8px;
+    }
+
+    .timelineContent {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}

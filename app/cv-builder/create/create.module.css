@@ -1,0 +1,646 @@
+/* CV Builder Create Page Styles */
+
+/* Step Indicator */
+.stepIndicatorWrapper {
+    max-width: 600px;
+    margin: 0 auto 2rem;
+}
+
+.stepIndicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stepContainer {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.stepContainer:last-child {
+    flex: 0;
+}
+
+.step {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    color: #6b7280;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.stepActive {
+    background: linear-gradient(135deg, 
+        hsl(var(--primary-h), var(--primary-s), var(--primary-l)) 0%, 
+        hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l)) 100%);
+    color: white;
+}
+
+.stepCompleted {
+    background: #22c55e;
+    color: white;
+}
+
+.stepLine {
+    flex: 1;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 8px;
+}
+
+.stepLineCompleted {
+    background: #22c55e;
+}
+
+.stepLabels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 0 4px;
+}
+
+.stepLabel {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-align: center;
+    flex: 1;
+}
+
+/* Tabs */
+.tabsContainer {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.tabBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #9ca3af;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    white-space: nowrap;
+}
+
+.tabBtn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tabBtnActive {
+    color: #fff;
+    background: linear-gradient(135deg, 
+        hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2) 0%, 
+        hsla(var(--secondary-h), var(--secondary-s), var(--secondary-l), 0.2) 100%);
+    border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
+}
+
+/* Form Sections */
+.formSection {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.glassCard {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 24px;
+    transition: all 0.3s ease;
+}
+
+.glassCard:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #fff;
+}
+
+.sectionTitle .text-accent {
+    color: var(--accent-color);
+}
+
+/* Form Elements */
+.formGroup {
+    margin-bottom: 0;
+}
+
+.formLabel {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #d1d5db;
+    margin-bottom: 8px;
+}
+
+.formInput {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: white;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.formInput:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.5);
+    box-shadow: 0 0 20px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
+}
+
+.formInput::placeholder {
+    color: #6b7280;
+}
+
+.formTextarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: white;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    outline: none;
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+.formTextarea:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.5);
+    box-shadow: 0 0 20px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: #9ca3af;
+    cursor: pointer;
+}
+
+.checkboxLabel input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-color);
+}
+
+/* Buttons */
+.btnPrimary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, 
+        hsl(var(--primary-h), var(--primary-s), var(--primary-l)) 0%, 
+        hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l)) 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btnPrimary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
+}
+
+.btnPrimary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btnSecondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btnSecondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.aiBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, 
+        hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2) 0%, 
+        hsla(var(--secondary-h), var(--secondary-s), var(--secondary-l), 0.2) 100%);
+    border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.aiBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, 
+        hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3) 0%, 
+        hsla(var(--secondary-h), var(--secondary-s), var(--secondary-l), 0.3) 100%);
+}
+
+.aiBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.addBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #d1d5db;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.addBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.removeBtn {
+    padding: 6px;
+    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.1);
+    border: none;
+    color: #f87171;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.removeBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Experience Items */
+.experienceItem {
+    padding: 20px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 16px;
+}
+
+.experienceItem:last-child {
+    margin-bottom: 0;
+}
+
+.itemNumber {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* AI Suggestion */
+.aiSuggestion {
+    background: linear-gradient(135deg, 
+        hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1) 0%, 
+        hsla(var(--secondary-h), var(--secondary-s), var(--secondary-l), 0.1) 100%);
+    border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.aiSuggestionHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 12px;
+}
+
+.aiSuggestionText {
+    font-size: 0.9rem;
+    color: #d1d5db;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.aiSuggestionActions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Skills */
+.skillTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.skillTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #d1d5db;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.skillTag:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.skillRemove {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.skillRemove:hover {
+    color: #f87171;
+}
+
+.addSkillRow {
+    display: flex;
+    gap: 8px;
+}
+
+.addSkillRow .formInput {
+    flex: 1;
+}
+
+.suggestedSkills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.suggestedSkill {
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    color: #9ca3af;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggestedSkill:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+/* Preview Panel */
+.previewContainer {
+    position: sticky;
+    top: 100px;
+}
+
+.templateBtn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #9ca3af;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.templateBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.templateBtnActive {
+    background: linear-gradient(135deg, 
+        hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2) 0%, 
+        hsla(var(--secondary-h), var(--secondary-s), var(--secondary-l), 0.2) 100%);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
+    color: white;
+}
+
+/* CV Preview Panel */
+.cvPreviewPanel {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    color: #1a1a2e;
+    min-height: 600px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.8);
+    transform-origin: top left;
+    width: 125%;
+}
+
+.cvHeader {
+    border-bottom: 2px solid #1a1a2e;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.cvName {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.cvContact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 0.8rem;
+    color: #4b5563;
+}
+
+.cvContact span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cvSocials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 6px;
+}
+
+.cvSocials span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cvSection {
+    margin-bottom: 20px;
+}
+
+.cvSectionTitle {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+.cvSummary {
+    font-size: 0.8rem;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.cvExperienceItem,
+.cvEducationItem {
+    margin-bottom: 12px;
+}
+
+.cvExpHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.cvExpHeader strong {
+    color: #1a1a2e;
+}
+
+.cvExpHeader span {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.cvExpCompany {
+    font-size: 0.8rem;
+    color: #4b5563;
+    margin-top: 2px;
+}
+
+.cvExpDesc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.cvSkills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.cvSkillTag {
+    padding: 4px 10px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: #374151;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .cvPreviewPanel {
+        transform: scale(1);
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .tabsContainer {
+        gap: 4px;
+    }
+
+    .tabBtn {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+    }
+
+    .stepIndicator {
+        gap: 4px;
+    }
+
+    .step {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+
+    .stepLine {
+        margin: 0 4px;
+    }
+}

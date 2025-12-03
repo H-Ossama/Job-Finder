@@ -27,15 +27,22 @@ const features = [
 export default function Features() {
     return (
         <section id="features" className={styles.features}>
-            <h2 className={styles.title}>Why Choose JobFinder AI?</h2>
-            <div className={styles.grid}>
-                {features.map((feature, index) => (
-                    <div key={index} className={styles.card}>
-                        <div className={styles.iconWrapper}>{feature.icon}</div>
-                        <h3 className={styles.cardTitle}>{feature.title}</h3>
-                        <p className={styles.cardDesc}>{feature.desc}</p>
-                    </div>
-                ))}
+            <div className={styles.container}>
+                <div className={styles.header}>
+                    <h2 className={styles.title}>Why Choose JobFinder AI?</h2>
+                    <p className={styles.description}>
+                        Powerful features designed to accelerate your job search
+                    </p>
+                </div>
+                <div className={styles.grid}>
+                    {features.map((feature, index) => (
+                        <div key={index} className={styles.card}>
+                            <div className={styles.iconWrapper}>{feature.icon}</div>
+                            <h3 className={styles.cardTitle}>{feature.title}</h3>
+                            <p className={styles.cardDesc}>{feature.desc}</p>
+                        </div>
+                    ))}
+                </div>
             </div>
         </section>
     );

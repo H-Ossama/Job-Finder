@@ -6,53 +6,136 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 4rem;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    z-index: 100;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem 2rem;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+    .header {
+        background: rgba(10, 10, 10, 0.8);
+    }
 }
 
 .logo {
     font-size: 1.5rem;
     font-weight: 700;
-    background: linear-gradient(90deg, #007CF0, #00DFD8);
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    z-index: 1001;
 }
 
 .nav {
     display: flex;
     gap: 2rem;
+    align-items: center;
 }
 
 .navLink {
-    color: inherit;
+    color: var(--text);
     text-decoration: none;
     font-weight: 500;
+    font-size: 0.95rem;
     transition: color 0.3s ease;
+    position: relative;
 }
 
 .navLink:hover {
-    color: #007CF0;
+    color: var(--primary);
+}
+
+.navLink::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.navLink:hover::after {
+    width: 100%;
 }
 
 .authButtons {
     display: flex;
     gap: 1rem;
+    align-items: center;
 }
 
 .loginBtn {
-    padding: 0.5rem 1.5rem;
-    border-radius: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    padding: 0.625rem 1.5rem;
+    border-radius: var(--radius-full);
+    border: none;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 124, 240, 0.3);
 }
 
 .loginBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 124, 240, 0.4);
+}
+
+.mobileMenuBtn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text);
+    padding: 0.5rem;
+    z-index: 1001;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 1rem 1.5rem;
+    }
+
+    .mobileMenuBtn {
+        display: block;
+    }
+
+    .nav {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 70%;
+        max-width: 300px;
+        height: 100vh;
+        background: var(--background);
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 5rem 2rem 2rem;
+        gap: 1.5rem;
+        box-shadow: -4px 0 20px var(--shadow);
+        transition: right 0.3s ease;
+    }
+
+    .nav.open {
+        right: 0;
+    }
+
+    .navLink::after {
+        display: none;
+    }
+
+    .authButtons {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .loginBtn {
+        width: 100%;
+        text-align: center;
+    }
 }

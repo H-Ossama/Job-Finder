@@ -1,0 +1,620 @@
+/* Notifications Page Styles */
+
+.dashboardWrapper {
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Custom Header */
+.customHeader {
+    position: fixed;
+    top: 0;
+    left: 250px;
+    right: 0;
+    height: 60px;
+    background: hsla(var(--dark-h), var(--dark-s), calc(var(--dark-l) + 2%), 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 100;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.mobileMenuBtn {
+    display: none;
+    background: none;
+    border: none;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.7);
+    cursor: pointer;
+    padding: 8px;
+}
+
+.headerTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+    margin: 0;
+}
+
+.unreadBadge {
+    background: linear-gradient(
+        135deg,
+        hsl(var(--primary-h), var(--primary-s), var(--primary-l)),
+        hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l))
+    );
+    color: white;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.markAllBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(
+        135deg,
+        hsl(var(--primary-h), var(--primary-s), var(--primary-l)),
+        hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l))
+    );
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.markAllBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
+}
+
+.settingsBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.05);
+    border: 1px solid hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.7);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.settingsBtn:hover {
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+}
+
+.userAvatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
+}
+
+.userAvatarPlaceholder {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(
+        135deg,
+        hsl(var(--primary-h), var(--primary-s), var(--primary-l)),
+        hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l))
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 0.875rem;
+}
+
+/* Main Content */
+.mainContent {
+    margin-left: 250px;
+    padding-top: 60px;
+    min-height: 100vh;
+}
+
+.contentWrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+/* Page Header */
+.pageHeader {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.pageTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+    margin: 0 0 8px 0;
+}
+
+.pageSubtitle {
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.6);
+    margin: 0;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    background: hsla(var(--dark-h), var(--dark-s), calc(var(--dark-l) + 3%), 0.6);
+    border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+    border-radius: 12px;
+    padding: 8px;
+    margin-bottom: 24px;
+}
+
+.tabBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.6);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tabBtn:hover {
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.05);
+}
+
+.tabBtn.active {
+    background: linear-gradient(
+        135deg,
+        hsl(var(--primary-h), var(--primary-s), var(--primary-l)),
+        hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l))
+    );
+    color: white;
+}
+
+.tabBadge {
+    background: hsla(0, 0%, 100%, 0.2);
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+}
+
+.tabBtn.active .tabBadge {
+    background: hsla(0, 0%, 100%, 0.3);
+}
+
+/* Notifications List */
+.notificationsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Empty State */
+.emptyState {
+    text-align: center;
+    padding: 60px 24px;
+    background: hsla(var(--dark-h), var(--dark-s), calc(var(--dark-l) + 3%), 0.6);
+    border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+    border-radius: 16px;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.5);
+}
+
+.emptyState svg {
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.emptyState h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.125rem;
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+}
+
+.emptyState p {
+    margin: 0;
+}
+
+/* Notification Item */
+.notificationItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    background: hsla(var(--dark-h), var(--dark-s), calc(var(--dark-l) + 3%), 0.6);
+    border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+    border-radius: 16px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.notificationItem:hover {
+    background: hsla(var(--dark-h), var(--dark-s), calc(var(--dark-l) + 5%), 0.8);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
+    transform: translateY(-2px);
+}
+
+.notificationItem.unread {
+    background: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.05);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
+}
+
+.unreadDot {
+    position: absolute;
+    top: 24px;
+    left: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+    box-shadow: 0 0 8px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.5);
+}
+
+/* Notification Icon */
+.notificationIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notificationIcon.green {
+    background: hsla(142, 76%, 36%, 0.1);
+    color: hsl(142, 76%, 56%);
+}
+
+.notificationIcon.purple {
+    background: hsla(270, 76%, 60%, 0.1);
+    color: hsl(270, 76%, 70%);
+}
+
+.notificationIcon.blue {
+    background: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+    color: hsl(var(--primary-h), var(--primary-s), calc(var(--primary-l) + 10%));
+}
+
+.notificationIcon.gray {
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.6);
+}
+
+.notificationIcon.red {
+    background: hsla(0, 76%, 60%, 0.1);
+    color: hsl(0, 76%, 70%);
+}
+
+/* Notification Content */
+.notificationContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.notificationHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.notificationTitle {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+    line-height: 1.4;
+}
+
+.notificationDesc {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.6);
+    line-height: 1.5;
+}
+
+.notificationMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.timestamp {
+    font-size: 0.75rem;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.4);
+    white-space: nowrap;
+}
+
+/* More Menu */
+.moreMenu {
+    position: relative;
+}
+
+.moreBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.moreBtn:hover {
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+}
+
+.dropdownMenu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: hsla(var(--dark-h), var(--dark-s), calc(var(--dark-l) + 5%), 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 160px;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dropdownMenu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.8);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.dropdownMenu button:hover {
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+}
+
+.dropdownMenu button.danger {
+    color: hsl(0, 76%, 65%);
+}
+
+.dropdownMenu button.danger:hover {
+    background: hsla(0, 76%, 65%, 0.1);
+}
+
+/* Notification Actions */
+.notificationActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.actionLink {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: linear-gradient(
+        135deg,
+        hsl(var(--primary-h), var(--primary-s), var(--primary-l)),
+        hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l))
+    );
+    border-radius: 8px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.actionLink:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
+}
+
+.secondaryAction {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid hsla(var(--light-h), var(--light-s), var(--light-l), 0.2);
+    border-radius: 8px;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.8);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.secondaryAction:hover {
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    border-color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.3);
+}
+
+/* Load More */
+.loadMore {
+    text-align: center;
+    margin-top: 24px;
+}
+
+.loadMoreBtn {
+    padding: 12px 32px;
+    background: hsla(var(--dark-h), var(--dark-s), calc(var(--dark-l) + 5%), 0.8);
+    border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
+    border-radius: 12px;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.8);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.loadMoreBtn:hover {
+    background: hsla(var(--dark-h), var(--dark-s), calc(var(--dark-l) + 8%), 0.9);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
+    transform: translateY(-2px);
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .customHeader {
+        left: 0;
+    }
+
+    .mainContent {
+        margin-left: 0;
+    }
+
+    .mobileMenuBtn {
+        display: flex;
+    }
+}
+
+@media (max-width: 768px) {
+    .customHeader {
+        padding: 0 16px;
+    }
+
+    .headerTitle {
+        font-size: 1rem;
+    }
+
+    .markAllBtn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+
+    .markAllBtn span {
+        display: none;
+    }
+
+    .contentWrapper {
+        padding: 24px 16px;
+    }
+
+    .pageTitle {
+        font-size: 1.5rem;
+    }
+
+    .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tabBtn {
+        padding: 8px 16px;
+        font-size: 0.813rem;
+        white-space: nowrap;
+    }
+
+    .notificationItem {
+        padding: 16px;
+    }
+
+    .notificationIcon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .notificationHeader {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .notificationMeta {
+        justify-content: flex-start;
+    }
+
+    .notificationActions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .actionLink,
+    .secondaryAction {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .headerRight {
+        gap: 8px;
+    }
+
+    .markAllBtn {
+        padding: 6px 10px;
+    }
+
+    .settingsBtn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .userAvatar,
+    .userAvatarPlaceholder {
+        width: 32px;
+        height: 32px;
+    }
+
+    .notificationItem {
+        gap: 12px;
+    }
+
+    .notificationTitle {
+        font-size: 0.938rem;
+    }
+
+    .notificationDesc {
+        font-size: 0.813rem;
+    }
+}

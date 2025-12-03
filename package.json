@@ -13,15 +13,27 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.86.0",
+    "@tailwindcss/postcss": "^4.1.17",
+    "chart.js": "^4.5.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
     "lucide-react": "^0.555.0",
+    "mammoth": "^1.11.0",
     "next": "^16.0.6",
+    "pdf-parse": "^1.1.1",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.67.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
+    "autoprefixer": "^10.4.22",
     "eslint": "^9.39.1",
-    "eslint-config-next": "^16.0.6"
+    "eslint-config-next": "^16.0.6",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.17"
   }
 }

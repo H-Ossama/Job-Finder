@@ -39,3 +39,57 @@ export async function signup(formData) {
     revalidatePath('/', 'layout')
     redirect('/')
 }
+
+export async function signInWithGoogle() {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+        },
+    })
+
+    if (error) {
+        redirect('/login?error=Could not authenticate with Google')
+    }
+
+    if (data.url) {
+        redirect(data.url)
+    }
+}
+
+export async function signInWithGithub() {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+        },
+    })
+
+    if (error) {
+        redirect('/login?error=Could not authenticate with GitHub')
+    }
+
+    if (data.url) {
+        redirect(data.url)
+    }
+}
+
+export async function signInWithLinkedIn() {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'linkedin_oidc',
+        options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+        },
+    })
+
+    if (error) {
+        redirect('/login?error=Could not authenticate with LinkedIn')
+    }
+
+    if (data.url) {
+        redirect(data.url)
+    }
+}

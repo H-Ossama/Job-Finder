@@ -2,6 +2,7 @@
 /node_modules
 /.pnp
 .pnp.js
+/UI-UX Generation
 
 # testing
 /coverage
@@ -12,19 +13,45 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
 *.pem
+Thumbs.db
+*.swp
+*.swo
+*~
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 ts-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# local env files
-.env*.local
+# logs folder
+/logs
+*.log
+
+# local env files - SENSITIVE DATA
 .env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# API keys and secrets
+*.key
+*.secret
+secrets.json
+credentials.json
+
+# Supabase
+supabase/.temp/
+.supabase/
 
 # vercel
 .vercel
@@ -32,3 +59,32 @@ ts-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE / Editor
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# Optional npm cache
+.npm
+
+# Yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz

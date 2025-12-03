@@ -1,20 +1,37 @@
-import Header from '@/components/Header';
 import './globals.css';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
+import { Suspense } from 'react';
+import ThemeProvider from '@/components/ThemeProvider';
+import MouseFollower from '@/components/MouseFollower';
+import PageLoader from '@/components/PageLoader';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+    subsets: ['latin'], 
+    variable: '--font-inter',
+    display: 'swap',
+});
+const playfair = Playfair_Display({ 
+    subsets: ['latin'], 
+    variable: '--font-playfair',
+    display: 'swap',
+});
 
 export const metadata = {
-    title: 'Job Finder AI',
-    description: 'AI-powered CV builder and job automation platform',
+    title: 'CareerForge AI — Build Your Future, Automatically',
+    description: 'Stop writing resumes. Start landing interviews. Our AI crafts perfect CVs while automatically matching you with your dream jobs.',
 };
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="en">
+        <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
             <body className={inter.className}>
-                <Header />
-                {children}
+                <ThemeProvider>
+                    <Suspense fallback={null}>
+                        <PageLoader />
+                    </Suspense>
+                    <MouseFollower />
+                    {children}
+                </ThemeProvider>
             </body>
         </html>
     );
