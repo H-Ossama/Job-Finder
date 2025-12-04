@@ -6,7 +6,7 @@
  * Best for: Academic, Research, Professional roles
  */
 export default function AzurillTemplate({ cvData }) {
-    const { personalInfo, summary, experience, education, skills, projects, awards, publications } = cvData || {};
+    const { personalInfo, summary, experience, education, skills, projects, awards, publications, certifications } = cvData || {};
 
     const formatDate = (date) => {
         if (!date) return '';
@@ -189,12 +189,35 @@ export default function AzurillTemplate({ cvData }) {
                                     {project.description && <p className="entry-desc">{project.description}</p>}
                                     {project.technologies && (
                                         <div className="tech-tags">
-                                            {project.technologies.split(',').map((tech, i) => (
-                                                <span key={i} className="tech-tag">{tech.trim()}</span>
+                                            {(Array.isArray(project.technologies) ? project.technologies : project.technologies.split(',')).map((tech, i) => (
+                                                <span key={i} className="tech-tag">{typeof tech === 'string' ? tech.trim() : tech}</span>
                                             ))}
                                         </div>
                                     )}
-                                    {project.url && <p className="entry-url">{project.url}</p>}
+                                    {(project.url || project.link) && <p className="entry-url">{project.url || project.link}</p>}
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Certifications */}
+                {certifications?.some(cert => cert.name) && (
+                    <section className="cv-section">
+                        <h2 className="section-title">Certifications</h2>
+                        <div className="section-content">
+                            {certifications.filter(cert => cert.name).map((cert, idx) => (
+                                <div key={idx} className="entry cert-entry">
+                                    <div className="entry-header">
+                                        <div className="entry-main">
+                                            <h3 className="entry-title">{cert.name}</h3>
+                                            {cert.issuer && <p className="entry-org">{cert.issuer}</p>}
+                                        </div>
+                                        <div className="entry-meta">
+                                            {cert.date && <span className="entry-date">{formatDate(cert.date)}</span>}
+                                        </div>
+                                    </div>
+                                    {cert.credentialId && <p className="entry-credential">Credential ID: {cert.credentialId}</p>}
                                 </div>
                             ))}
                         </div>
@@ -493,6 +516,16 @@ export default function AzurillTemplate({ cvData }) {
 
                 .rating-dot.filled {
                     background: #10b981;
+                }
+
+                .cert-entry {
+                    margin-bottom: 12px;
+                }
+
+                .entry-credential {
+                    font-size: 8.5pt;
+                    color: #6b7280;
+                    margin: 4px 0 0 0;
                 }
 
                 @media print {

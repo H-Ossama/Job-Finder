@@ -204,16 +204,42 @@ export default function AwesomeTemplate({ cvData, themeColor = '#0395DE', fontFa
                                 <div className="entry-header">
                                     <div className="entry-left">
                                         <h3 className="entry-title">{project.name}</h3>
-                                        {project.technologies && <p className="entry-tech">{project.technologies}</p>}
+                                        {project.technologies && (
+                                            <p className="entry-tech">
+                                                {Array.isArray(project.technologies) 
+                                                    ? project.technologies.join(', ') 
+                                                    : project.technologies}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="entry-right">
-                                        {project.url && <span className="entry-link">{project.url}</span>}
+                                        {(project.url || project.link) && <span className="entry-link">{project.url || project.link}</span>}
                                         {project.date && <span className="entry-date">{project.date}</span>}
                                     </div>
                                 </div>
                                 {project.description && <p className="entry-description">{project.description}</p>}
                             </div>
                         ))}
+                    </section>
+                )}
+
+                {/* Certifications - New detailed format */}
+                {certifications?.length > 0 && certifications.some(c => c.name) && (
+                    <section className="cv-section">
+                        <h2 className="section-title">Certifications</h2>
+                        <div className="section-divider"></div>
+                        <div className="certs-table">
+                            {certifications.filter(c => c.name).map((cert, idx) => (
+                                <div key={idx} className="cert-row">
+                                    <span className="cert-date">{cert.date ? formatDate(cert.date) : ''}</span>
+                                    <span className="cert-name">
+                                        {cert.name}
+                                        {cert.issuer && <span className="cert-issuer">, {cert.issuer}</span>}
+                                    </span>
+                                    {cert.credentialId && <span className="cert-id">{cert.credentialId}</span>}
+                                </div>
+                            ))}
+                        </div>
                     </section>
                 )}
 
@@ -463,6 +489,40 @@ export default function AwesomeTemplate({ cvData, themeColor = '#0395DE', fontFa
                     min-width: 100px;
                     text-align: right;
                     color: #666;
+                }
+
+                .certs-table {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+
+                .cert-row {
+                    display: flex;
+                    font-size: 9pt;
+                    align-items: baseline;
+                    gap: 8px;
+                }
+
+                .cert-date {
+                    min-width: 70px;
+                    color: #888;
+                }
+
+                .cert-name {
+                    flex: 1;
+                    font-weight: 600;
+                    color: #333;
+                }
+
+                .cert-issuer {
+                    font-weight: 400;
+                    color: #555;
+                }
+
+                .cert-id {
+                    font-size: 8pt;
+                    color: #888;
                 }
             `}</style>
         </div>

@@ -83,9 +83,6 @@ export default function SectionReorder({ sections, onReorder }) {
                             <span className={styles.sectionOrder}>{index + 1}</span>
                             <div className={styles.sectionDetails}>
                                 <span className={styles.sectionName}>{section.label}</span>
-                                {section.required && (
-                                    <span className={styles.requiredBadge}>Required</span>
-                                )}
                             </div>
                         </div>
 
@@ -109,19 +106,17 @@ export default function SectionReorder({ sections, onReorder }) {
                                 </button>
                             </div>
 
-                            {!section.required && (
-                                <button
-                                    className={styles.visibilityBtn}
-                                    onClick={() => toggleVisibility(index)}
-                                    title={section.visible ? 'Hide section' : 'Show section'}
-                                >
-                                    {section.visible ? (
-                                        <Eye className="w-5 h-5" />
-                                    ) : (
-                                        <EyeOff className="w-5 h-5" />
-                                    )}
-                                </button>
-                            )}
+                            <button
+                                className={styles.visibilityBtn}
+                                onClick={() => toggleVisibility(index)}
+                                title={section.visible ? 'Hide section' : 'Show section'}
+                            >
+                                {section.visible ? (
+                                    <Eye className="w-5 h-5" />
+                                ) : (
+                                    <EyeOff className="w-5 h-5" />
+                                )}
+                            </button>
                         </div>
                     </div>
                 ))}

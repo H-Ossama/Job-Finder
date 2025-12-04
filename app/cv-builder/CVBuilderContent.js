@@ -2,6 +2,8 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { 
     User, 
     Briefcase, 
@@ -30,10 +32,12 @@ import {
     Settings,
     Image,
     Upload,
-    Palette,
-    AlertCircle
+    AlertCircle,
+    FolderKanban,
+    Award,
+    ExternalLink
 } from 'lucide-react';
-import { saveCV } from '../actions';
+import { saveCV, updateCV } from './actions';
 import CVPreview from '@/components/cv/CVPreview';
 import LivePreviewPanel from '@/components/cv/LivePreviewPanel';
 import TemplateSelector from '@/components/cv/TemplateSelector';
@@ -88,26 +92,18 @@ const initialFormData = {
         languages: [],
         certifications: []
     },
-    projects: []
+    projects: [
+        {
+            id: 1,
+            name: '',
+            description: '',
+            technologies: [],
+            link: '',
+            date: ''
+        }
+    ],
+    certifications: []
 };
-
-// Theme color options
-const THEME_COLORS = [
-    { value: '#ef4444', name: 'Red' },
-    { value: '#f97316', name: 'Orange' },
-    { value: '#f59e0b', name: 'Amber' },
-    { value: '#eab308', name: 'Yellow' },
-    { value: '#84cc16', name: 'Lime' },
-    { value: '#22c55e', name: 'Green' },
-    { value: '#10b981', name: 'Emerald' },
-    { value: '#14b8a6', name: 'Teal' },
-    { value: '#06b6d4', name: 'Cyan' },
-    { value: '#0ea5e9', name: 'Sky' },
-    { value: '#3b82f6', name: 'Blue' },
-    { value: '#6366f1', name: 'Indigo' },
-    { value: '#8b5cf6', name: 'Violet' },
-    { value: '#a855f7', name: 'Purple' }
-];
 
 // Font family options
 const FONT_FAMILIES = [
@@ -123,71 +119,234 @@ const FONT_FAMILIES = [
     { value: 'Merriweather', name: 'Merriweather' }
 ];
 
-// Updated steps with Resume Settings
+// Updated steps with Projects and Resume Settings
 const steps = [
     { id: 1, name: 'Template', icon: Layout },
     { id: 2, name: 'Details', icon: User },
     { id: 3, name: 'Experience', icon: Briefcase },
     { id: 4, name: 'Education', icon: GraduationCap },
     { id: 5, name: 'Skills', icon: Wrench },
-    { id: 6, name: 'Settings', icon: Settings },
-    { id: 7, name: 'Review', icon: Check }
+    { id: 6, name: 'Projects', icon: FolderKanban },
+    { id: 7, name: 'Settings', icon: Settings },
+    { id: 8, name: 'Review', icon: Check }
 ];
 
-export default function CVBuilderContent({ user, profile }) {
+export default function CVBuilderContent({ user, profile, existingCV }) {
     const router = useRouter();
     const fileInputRef = useRef(null);
-    const [showUploadModal, setShowUploadModal] = useState(true);
-    const [currentStep, setCurrentStep] = useState(1);
+    // Only show upload modal if not editing an existing CV
+    const [showUploadModal, setShowUploadModal] = useState(!existingCV);
+    // If editing, skip to template/settings step
+    const [currentStep, setCurrentStep] = useState(existingCV ? 7 : 1);
     const [uploadedData, setUploadedData] = useState(null);
     const [missingFieldsNotification, setMissingFieldsNotification] = useState(null);
-    const [formData, setFormData] = useState({
-        ...initialFormData,
-        personalInfo: {
-            ...initialFormData.personalInfo,
-            firstName: profile?.full_name?.split(' ')[0] || '',
-            lastName: profile?.full_name?.split(' ').slice(1).join(' ') || '',
-            email: user?.email || '',
-            location: profile?.location || ''
+    
+    // Initialize form data from existing CV or defaults
+    const getInitialFormData = () => {
+        if (existingCV && existingCV.content) {
+            const content = existingCV.content;
+            return {
+                personalInfo: {
+                    firstName: content.personalInfo?.firstName || profile?.full_name?.split(' ')[0] || '',
+                    lastName: content.personalInfo?.lastName || profile?.full_name?.split(' ').slice(1).join(' ') || '',
+                    email: content.personalInfo?.email || user?.email || '',
+                    phone: content.personalInfo?.phone || '',
+                    location: content.personalInfo?.location || profile?.location || '',
+                    website: content.personalInfo?.website || '',
+                    linkedin: content.personalInfo?.linkedin || '',
+                    github: content.personalInfo?.github || '',
+                    photo: content.personalInfo?.photo || null,
+                    title: content.personalInfo?.title || ''
+                },
+                summary: content.summary || '',
+                experience: content.experience?.length > 0 ? content.experience.map((exp, i) => ({
+                    id: exp.id || Date.now() + i,
+                    company: exp.company || '',
+                    title: exp.title || '',
+                    location: exp.location || '',
+                    startDate: exp.startDate || '',
+                    endDate: exp.endDate || '',
+                    current: exp.current || false,
+                    description: exp.description || '',
+                    bullets: exp.bullets || []
+                })) : initialFormData.experience,
+                education: content.education?.length > 0 ? content.education.map((edu, i) => ({
+                    id: edu.id || Date.now() + i,
+                    school: edu.school || '',
+                    degree: edu.degree || '',
+                    field: edu.field || '',
+                    startDate: edu.startDate || '',
+                    endDate: edu.endDate || '',
+                    gpa: edu.gpa || '',
+                    honors: edu.honors || ''
+                })) : initialFormData.education,
+                skills: {
+                    technical: content.skills?.technical || [],
+                    soft: content.skills?.soft || [],
+                    languages: content.skills?.languages || [],
+                    certifications: content.skills?.certifications || []
+                },
+                projects: content.projects?.length > 0 ? content.projects.map((proj, i) => ({
+                    id: proj.id || Date.now() + i,
+                    name: proj.name || '',
+                    description: proj.description || '',
+                    technologies: proj.technologies || [],
+                    link: proj.link || '',
+                    date: proj.date || ''
+                })) : initialFormData.projects,
+                certifications: content.certifications || []
+            };
         }
-    });
+        
+        return {
+            ...initialFormData,
+            personalInfo: {
+                ...initialFormData.personalInfo,
+                firstName: profile?.full_name?.split(' ')[0] || '',
+                lastName: profile?.full_name?.split(' ').slice(1).join(' ') || '',
+                email: user?.email || '',
+                location: profile?.location || ''
+            }
+        };
+    };
+
+    const [formData, setFormData] = useState(getInitialFormData);
     const [saving, setSaving] = useState(false);
     const [generatingAI, setGeneratingAI] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState('');
     const [showAiSuggestion, setShowAiSuggestion] = useState(false);
     const [newSkill, setNewSkill] = useState('');
-    const [selectedTemplate, setSelectedTemplate] = useState('modern');
+    // Use existing CV template or default to modern
+    const [selectedTemplate, setSelectedTemplate] = useState(existingCV?.template || 'modern');
     const [atsScore, setAtsScore] = useState(null);
     const [generatingBullets, setGeneratingBullets] = useState(null);
     
-    // Resume settings state
-    const [resumeSettings, setResumeSettings] = useState({
-        themeColor: '#ef4444',
-        fontFamily: 'Roboto',
-        fontSize: 'standard',
-        paperSize: 'letter'
+    // Resume settings state - use existing CV settings or defaults
+    const [resumeSettings, setResumeSettings] = useState(() => {
+        if (existingCV?.content?._settings) {
+            return existingCV.content._settings;
+        }
+        return {
+            fontFamily: 'Roboto',
+            fontSize: 'standard',
+            customFontSize: null,
+            paperSize: 'letter'
+        };
     });
 
     // Section order state for reordering
-    const [sectionOrder, setSectionOrder] = useState([
-        { id: 'summary', label: 'Professional Summary', visible: true, required: true },
-        { id: 'experience', label: 'Work Experience', visible: true, required: true },
-        { id: 'education', label: 'Education', visible: true, required: true },
-        { id: 'skills', label: 'Skills', visible: true, required: true },
-        { id: 'projects', label: 'Projects', visible: false, required: false },
-        { id: 'certifications', label: 'Certifications', visible: false, required: false }
-    ]);
+    const [sectionOrder, setSectionOrder] = useState(() => {
+        if (existingCV?.content?._sectionOrder) {
+            return existingCV.content._sectionOrder;
+        }
+        return [
+            { id: 'summary', label: 'Professional Summary', visible: true },
+            { id: 'experience', label: 'Work Experience', visible: true },
+            { id: 'education', label: 'Education', visible: true },
+            { id: 'skills', label: 'Skills', visible: true },
+            { id: 'projects', label: 'Projects', visible: true },
+            { id: 'certifications', label: 'Certifications', visible: true }
+        ];
+    });
+
+    // Resizable panel state
+    const [leftPanelWidth, setLeftPanelWidth] = useState(50); // percentage
+    const [isResizing, setIsResizing] = useState(false);
+    const containerRef = useRef(null);
+
+    // Handle panel resize
+    const handleResizeStart = useCallback((e) => {
+        e.preventDefault();
+        setIsResizing(true);
+    }, []);
+
+    const handleResizeMove = useCallback((e) => {
+        if (!isResizing || !containerRef.current) return;
+        
+        const container = containerRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+        
+        // Clamp between 30% and 70%
+        const clampedWidth = Math.min(70, Math.max(30, newWidth));
+        setLeftPanelWidth(clampedWidth);
+    }, [isResizing]);
+
+    const handleResizeEnd = useCallback(() => {
+        setIsResizing(false);
+    }, []);
+
+    // Add global mouse events for resizing
+    useEffect(() => {
+        if (isResizing) {
+            document.addEventListener('mousemove', handleResizeMove);
+            document.addEventListener('mouseup', handleResizeEnd);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        }
+        return () => {
+            document.removeEventListener('mousemove', handleResizeMove);
+            document.removeEventListener('mouseup', handleResizeEnd);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isResizing, handleResizeMove, handleResizeEnd]);
 
     // Handle CV upload success
     const handleUploadSuccess = (data, missingFields) => {
-        // Merge uploaded data with form data
+        // Merge uploaded data with form data, preserving structure
         setFormData(prev => ({
             ...prev,
-            ...data,
             personalInfo: {
                 ...prev.personalInfo,
-                ...data.personalInfo
-            }
+                ...data.personalInfo,
+                firstName: data.personalInfo?.firstName || prev.personalInfo.firstName,
+                lastName: data.personalInfo?.lastName || prev.personalInfo.lastName
+            },
+            summary: data.summary || prev.summary,
+            experience: data.experience?.length > 0 ? data.experience.map((exp, i) => ({
+                id: exp.id || Date.now() + i,
+                company: exp.company || '',
+                title: exp.title || '',
+                location: exp.location || '',
+                startDate: exp.startDate || '',
+                endDate: exp.endDate || '',
+                current: exp.current || false,
+                description: exp.description || '',
+                bullets: exp.bullets || []
+            })) : prev.experience,
+            education: data.education?.length > 0 ? data.education.map((edu, i) => ({
+                id: edu.id || Date.now() + i,
+                school: edu.school || '',
+                degree: edu.degree || '',
+                field: edu.field || '',
+                startDate: edu.startDate || '',
+                endDate: edu.endDate || '',
+                gpa: edu.gpa || '',
+                honors: edu.honors || ''
+            })) : prev.education,
+            skills: {
+                technical: data.skills?.technical || prev.skills.technical,
+                soft: data.skills?.soft || prev.skills.soft,
+                languages: data.skills?.languages || prev.skills.languages,
+                certifications: data.skills?.certifications || prev.skills.certifications
+            },
+            projects: data.projects?.length > 0 ? data.projects.map((proj, i) => ({
+                id: proj.id || Date.now() + i,
+                name: proj.name || '',
+                description: proj.description || '',
+                technologies: proj.technologies || [],
+                link: proj.link || '',
+                date: proj.date || ''
+            })) : prev.projects,
+            certifications: data.certifications?.length > 0 ? data.certifications.map((cert, i) => ({
+                id: cert.id || Date.now() + i,
+                name: typeof cert === 'string' ? cert : (cert.name || ''),
+                issuer: cert.issuer || '',
+                date: cert.date || '',
+                expiry: cert.expiry || '',
+                credentialId: cert.credentialId || ''
+            })) : prev.certifications
         }));
         
         setUploadedData(data);
@@ -202,7 +361,7 @@ export default function CVBuilderContent({ user, profile }) {
             });
         } else {
             // All data is complete, go to settings
-            setCurrentStep(6);
+            setCurrentStep(7);
         }
         
         setShowUploadModal(false);
@@ -356,6 +515,91 @@ export default function CVBuilderContent({ user, profile }) {
         }));
     };
 
+    // Project handlers
+    const addProject = () => {
+        setFormData(prev => ({
+            ...prev,
+            projects: [...(prev.projects || []), {
+                id: Date.now(),
+                name: '',
+                description: '',
+                technologies: [],
+                link: '',
+                date: ''
+            }]
+        }));
+    };
+
+    const updateProject = (id, field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            projects: (prev.projects || []).map(proj => 
+                proj.id === id ? { ...proj, [field]: value } : proj
+            )
+        }));
+    };
+
+    const removeProject = (id) => {
+        setFormData(prev => ({
+            ...prev,
+            projects: (prev.projects || []).filter(proj => proj.id !== id)
+        }));
+    };
+
+    const addProjectTechnology = (projectId, tech) => {
+        if (!tech.trim()) return;
+        setFormData(prev => ({
+            ...prev,
+            projects: (prev.projects || []).map(proj => 
+                proj.id === projectId 
+                    ? { ...proj, technologies: [...(proj.technologies || []), tech.trim()] }
+                    : proj
+            )
+        }));
+    };
+
+    const removeProjectTechnology = (projectId, tech) => {
+        setFormData(prev => ({
+            ...prev,
+            projects: (prev.projects || []).map(proj => 
+                proj.id === projectId 
+                    ? { ...proj, technologies: (proj.technologies || []).filter(t => t !== tech) }
+                    : proj
+            )
+        }));
+    };
+
+    // Certification handlers
+    const addCertification = () => {
+        setFormData(prev => ({
+            ...prev,
+            certifications: [...(prev.certifications || []), {
+                id: Date.now(),
+                name: '',
+                issuer: '',
+                date: '',
+                expiry: '',
+                credentialId: ''
+            }]
+        }));
+    };
+
+    const updateCertification = (id, field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            certifications: (prev.certifications || []).map(cert => 
+                cert.id === id ? { ...cert, [field]: value } : cert
+            )
+        }));
+    };
+
+    const removeCertification = (id) => {
+        setFormData(prev => ({
+            ...prev,
+            certifications: (prev.certifications || []).filter(cert => cert.id !== id)
+        }));
+    };
+
     // Skills handlers
     const addSkill = (type) => {
         if (newSkill.trim()) {
@@ -435,17 +679,30 @@ export default function CVBuilderContent({ user, profile }) {
     const handleSaveCV = async () => {
         setSaving(true);
         try {
+            // Store settings inside content so they persist
+            const contentWithSettings = {
+                ...formData,
+                _settings: resumeSettings,
+                _sectionOrder: sectionOrder
+            };
+            
             const cvData = {
                 title: `${formData.personalInfo.firstName} ${formData.personalInfo.lastName} - CV`,
-                content: formData,
+                content: contentWithSettings,
                 template: selectedTemplate,
-                settings: resumeSettings,
                 ats_score: atsScore?.score || 0,
-                is_primary: false
+                is_primary: existingCV?.is_primary || false
             };
 
-            const savedCV = await saveCV(cvData);
-            router.push(`/cv-builder/edit/${savedCV.id}`);
+            let savedCV;
+            if (existingCV) {
+                // Update existing CV
+                savedCV = await updateCV(existingCV.id, cvData);
+            } else {
+                // Create new CV
+                savedCV = await saveCV(cvData);
+            }
+            router.push(`/cv-builder/result/${savedCV.id}`);
         } catch (error) {
             console.error('Error saving CV:', error);
         } finally {
@@ -454,8 +711,83 @@ export default function CVBuilderContent({ user, profile }) {
     };
 
     // Download PDF
+    const [downloading, setDownloading] = useState(false);
     const downloadPDF = async () => {
-        window.print();
+        setDownloading(true);
+        try {
+            // Find the CV document element in the preview
+            const previewContainer = document.querySelector('.live-preview-panel');
+            const cvElement = previewContainer?.querySelector('.paper-document') || 
+                              previewContainer?.querySelector('.cv-document') ||
+                              document.querySelector('.cv-preview-container');
+            
+            if (!cvElement) {
+                console.error('CV element not found');
+                window.print();
+                return;
+            }
+            
+            // Get the paper size settings
+            const isA4 = resumeSettings.paperSize === 'a4';
+            
+            // Paper dimensions in mm
+            const pdfWidth = isA4 ? 210 : 215.9; // A4 or Letter width
+            const pdfHeight = isA4 ? 297 : 279.4; // A4 or Letter height
+            
+            // Create canvas from the CV element
+            const canvas = await html2canvas(cvElement, {
+                scale: 2, // Higher resolution
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                windowWidth: cvElement.scrollWidth,
+                windowHeight: cvElement.scrollHeight
+            });
+            
+            // Create PDF
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: isA4 ? 'a4' : 'letter'
+            });
+            
+            // Calculate dimensions to fit the page
+            const imgWidth = pdfWidth;
+            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+            
+            // Add image to PDF (may span multiple pages)
+            let heightLeft = imgHeight;
+            let position = 0;
+            
+            const imgData = canvas.toDataURL('image/png');
+            
+            // First page
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pdfHeight;
+            
+            // Add more pages if needed
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pdfHeight;
+            }
+            
+            // Generate filename
+            const firstName = formData.personalInfo?.firstName || 'My';
+            const lastName = formData.personalInfo?.lastName || 'CV';
+            const filename = `${firstName}_${lastName}_CV.pdf`.replace(/\s+/g, '_');
+            
+            // Download the PDF
+            pdf.save(filename);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            // Fallback to window.print() if canvas fails
+            window.print();
+        } finally {
+            setDownloading(false);
+        }
     };
 
     const suggestedTechnicalSkills = ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'GraphQL', 'PostgreSQL', 'MongoDB', 'Kubernetes', 'Git', 'CI/CD'];
@@ -476,7 +808,7 @@ export default function CVBuilderContent({ user, profile }) {
 
             <div className="space-y-6">
                 {/* Missing Fields Notification */}
-                {missingFieldsNotification && currentStep >= 2 && currentStep <= 5 && (
+                {missingFieldsNotification && currentStep >= 2 && currentStep <= 6 && (
                     <div className={styles.notificationBanner}>
                         <AlertCircle className="w-5 h-5 text-amber-400" />
                         <div className={styles.notificationContent}>
@@ -492,7 +824,7 @@ export default function CVBuilderContent({ user, profile }) {
                         <button
                             onClick={() => {
                                 setMissingFieldsNotification(null);
-                                setCurrentStep(6); // Skip to settings
+                                setCurrentStep(7); // Skip to settings
                             }}
                             className={styles.skipBtn}
                         >
@@ -505,14 +837,28 @@ export default function CVBuilderContent({ user, profile }) {
                 <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                     <h1 className="text-2xl font-bold mb-1">
-                        <span className="text-gradient">Build Your CV</span>
+                        <span className="text-gradient">{existingCV ? 'Edit Your CV' : 'Build Your CV'}</span>
                     </h1>
-                    <p className="text-gray-400 text-sm">Let AI help you create a professional, ATS-optimized CV</p>
+                    <p className="text-gray-400 text-sm">
+                        {existingCV 
+                            ? `Editing: ${existingCV.title}`
+                            : 'Let AI help you create a professional, ATS-optimized CV'
+                        }
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={downloadPDF} className={styles.btnSecondary}>
-                        <Download className="w-4 h-4" />
-                        Download PDF
+                    <button onClick={downloadPDF} className={styles.btnSecondary} disabled={downloading}>
+                        {downloading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Download className="w-4 h-4" />
+                                Download PDF
+                            </>
+                        )}
                     </button>
                     <button 
                         onClick={handleSaveCV}
@@ -578,11 +924,17 @@ export default function CVBuilderContent({ user, profile }) {
                 </div>
             )}
 
-            {/* Steps 2-6: Details, Experience, Education, Skills, Settings */}
-            {(currentStep >= 2 && currentStep <= 6) && (
-                <div className={styles.builderLayout}>
+            {/* Steps 2-7: Details, Experience, Education, Skills, Projects, Settings */}
+            {(currentStep >= 2 && currentStep <= 7) && (
+                <div 
+                    className={styles.builderLayout}
+                    ref={containerRef}
+                >
                     {/* Left Panel - Form */}
-                    <div className={styles.formPanel}>
+                    <div 
+                        className={styles.formPanel}
+                        style={{ width: `${leftPanelWidth}%` }}
+                    >
                         {/* Step 2: Personal Info & Summary */}
                         {currentStep === 2 && (
                             <div className={styles.formSection}>
@@ -1150,38 +1502,282 @@ export default function CVBuilderContent({ user, profile }) {
                             </div>
                         )}
 
-                        {/* Step 6: Resume Settings */}
+                        {/* Step 6: Projects */}
                         {currentStep === 6 && (
                             <div className={styles.formSection}>
                                 <div className={styles.glassCard}>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className={styles.sectionTitle}>
+                                            <FolderKanban className="w-5 h-5 text-accent" />
+                                            Projects
+                                        </h3>
+                                        <button onClick={addProject} className={styles.addBtn}>
+                                            <Plus className="w-4 h-4" />
+                                            Add Project
+                                        </button>
+                                    </div>
+                                    <p className="text-sm text-gray-400 mb-4">
+                                        Showcase your personal, academic, or professional projects to demonstrate your skills.
+                                    </p>
+
+                                    {(formData.projects || []).map((project, index) => (
+                                        <div key={project.id} className={styles.experienceItem}>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className={styles.itemNumber}>Project {index + 1}</span>
+                                                {(formData.projects || []).length > 1 && (
+                                                    <button 
+                                                        onClick={() => removeProject(project.id)}
+                                                        className={styles.removeBtn}
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className={styles.formGroup + " md:col-span-2"}>
+                                                    <label className={styles.formLabel}>Project Name</label>
+                                                    <input
+                                                        type="text"
+                                                        className={styles.formInput}
+                                                        value={project.name}
+                                                        onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+                                                        placeholder="E-commerce Platform"
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup + " md:col-span-2"}>
+                                                    <label className={styles.formLabel}>Description</label>
+                                                    <textarea
+                                                        className={styles.formTextarea}
+                                                        value={project.description}
+                                                        onChange={(e) => updateProject(project.id, 'description', e.target.value)}
+                                                        placeholder="Describe what the project does, your role, and key achievements..."
+                                                        rows={3}
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.formLabel}>Date / Duration</label>
+                                                    <input
+                                                        type="text"
+                                                        className={styles.formInput}
+                                                        value={project.date}
+                                                        onChange={(e) => updateProject(project.id, 'date', e.target.value)}
+                                                        placeholder="Jan 2024 - Present"
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.formLabel}>
+                                                        <ExternalLink className="w-4 h-4 inline mr-1" />
+                                                        Project Link (Optional)
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        className={styles.formInput}
+                                                        value={project.link}
+                                                        onChange={(e) => updateProject(project.id, 'link', e.target.value)}
+                                                        placeholder="https://github.com/user/project"
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup + " md:col-span-2"}>
+                                                    <label className={styles.formLabel}>Technologies Used</label>
+                                                    <div className={styles.skillTags}>
+                                                        {(project.technologies || []).map(tech => (
+                                                            <span key={tech} className={styles.skillTag}>
+                                                                {tech}
+                                                                <button 
+                                                                    onClick={() => removeProjectTechnology(project.id, tech)} 
+                                                                    className={styles.skillRemove}
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                    <div className={styles.addSkillRow}>
+                                                        <input
+                                                            type="text"
+                                                            className={styles.formInput}
+                                                            placeholder="Add technology (e.g., React, Node.js)..."
+                                                            onKeyPress={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    addProjectTechnology(project.id, e.target.value);
+                                                                    e.target.value = '';
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {(!formData.projects || formData.projects.length === 0) && (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <FolderKanban className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                            <p>No projects added yet.</p>
+                                            <button onClick={addProject} className={styles.btnSecondary + " mt-3"}>
+                                                <Plus className="w-4 h-4" />
+                                                Add Your First Project
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Certifications Section - Detailed */}
+                                <div className={styles.glassCard}>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className={styles.sectionTitle}>
+                                            <Award className="w-5 h-5 text-accent" />
+                                            Certifications
+                                        </h3>
+                                        <button onClick={addCertification} className={styles.addBtn}>
+                                            <Plus className="w-4 h-4" />
+                                            Add Certification
+                                        </button>
+                                    </div>
+
+                                    {(formData.certifications || []).map((cert, index) => (
+                                        <div key={cert.id || index} className={styles.experienceItem}>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className={styles.itemNumber}>Certification {index + 1}</span>
+                                                <button 
+                                                    onClick={() => removeCertification(cert.id)}
+                                                    className={styles.removeBtn}
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            <div className="grid md:grid-cols-2 gap-4">
+                                                <div className={styles.formGroup + " md:col-span-2"}>
+                                                    <label className={styles.formLabel}>Certification Name</label>
+                                                    <input
+                                                        type="text"
+                                                        className={styles.formInput}
+                                                        value={cert.name || ''}
+                                                        onChange={(e) => updateCertification(cert.id, 'name', e.target.value)}
+                                                        placeholder="AWS Solutions Architect Associate"
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.formLabel}>Issuing Organization</label>
+                                                    <input
+                                                        type="text"
+                                                        className={styles.formInput}
+                                                        value={cert.issuer || ''}
+                                                        onChange={(e) => updateCertification(cert.id, 'issuer', e.target.value)}
+                                                        placeholder="Amazon Web Services"
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.formLabel}>Date Obtained</label>
+                                                    <input
+                                                        type="text"
+                                                        className={styles.formInput}
+                                                        value={cert.date || ''}
+                                                        onChange={(e) => updateCertification(cert.id, 'date', e.target.value)}
+                                                        placeholder="Jan 2024"
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.formLabel}>Expiration Date (Optional)</label>
+                                                    <input
+                                                        type="text"
+                                                        className={styles.formInput}
+                                                        value={cert.expiry || ''}
+                                                        onChange={(e) => updateCertification(cert.id, 'expiry', e.target.value)}
+                                                        placeholder="Jan 2027"
+                                                    />
+                                                </div>
+                                                <div className={styles.formGroup}>
+                                                    <label className={styles.formLabel}>Credential ID (Optional)</label>
+                                                    <input
+                                                        type="text"
+                                                        className={styles.formInput}
+                                                        value={cert.credentialId || ''}
+                                                        onChange={(e) => updateCertification(cert.id, 'credentialId', e.target.value)}
+                                                        placeholder="ABC123XYZ"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {(!formData.certifications || formData.certifications.length === 0) && (
+                                        <div className="text-center py-6 text-gray-500">
+                                            <Award className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                                            <p className="text-sm">No certifications added yet.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step 7: Resume Settings */}
+                        {currentStep === 7 && (
+                            <div className={styles.formSection}>
+                                {/* Template Switcher - Primary */}
+                                <div className={styles.glassCard}>
+                                    <h3 className={styles.sectionTitle}>
+                                        <Layout className="w-5 h-5 text-accent" />
+                                        Choose Template
+                                    </h3>
+                                    <p className="text-sm text-gray-400 mb-4">
+                                        Select a template that best fits your industry and style.
+                                    </p>
+                                    
+                                    {/* Photo Warning */}
+                                    {TEMPLATE_INFO[selectedTemplate]?.hasPhoto && !formData.personalInfo?.photo && (
+                                        <div className={styles.photoWarning}>
+                                            <AlertCircle className="w-5 h-5" />
+                                            <div className={styles.photoWarningContent}>
+                                                <span className={styles.photoWarningText}>
+                                                    <strong>{TEMPLATE_INFO[selectedTemplate]?.name}</strong> template supports a profile photo.
+                                                </span>
+                                                <div className={styles.photoWarningActions}>
+                                                    <button 
+                                                        onClick={() => setCurrentStep(2)}
+                                                        className={styles.photoWarningBtn}
+                                                    >
+                                                        <Image className="w-4 h-4" />
+                                                        Add Photo
+                                                    </button>
+                                                    <span className={styles.photoWarningSkip}>or continue without</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className={styles.templateSelectorGrid}>
+                                        {allTemplates.map(template => (
+                                            <button 
+                                                key={template}
+                                                className={`${styles.templateCard} ${selectedTemplate === template ? styles.templateCardActive : ''}`}
+                                                onClick={() => setSelectedTemplate(template)}
+                                            >
+                                                <div className={styles.templateCardHeader}>
+                                                    <span className={styles.templateCardName}>{TEMPLATE_INFO[template]?.name || template}</span>
+                                                    {selectedTemplate === template && <Check className="w-4 h-4 text-green-400" />}
+                                                </div>
+                                                <p className={styles.templateCardDesc}>{TEMPLATE_INFO[template]?.description}</p>
+                                                <div className={styles.templateCardMeta}>
+                                                    {TEMPLATE_INFO[template]?.hasPhoto && (
+                                                        <span className={styles.templateBadge}>
+                                                            <Image className="w-3 h-3" /> Photo
+                                                        </span>
+                                                    )}
+                                                    <span className={styles.templateBadgeSecondary}>{TEMPLATE_INFO[template]?.bestFor?.split(',')[0]}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Typography Settings */}
+                                <div className={styles.glassCard}>
                                     <h3 className={styles.sectionTitle}>
                                         <Settings className="w-5 h-5 text-accent" />
-                                        Resume Settings
+                                        Typography Settings
                                     </h3>
-
-                                    {/* Theme Color */}
-                                    <div className={styles.settingGroup}>
-                                        <label className={styles.settingLabel}>
-                                            <Palette className="w-4 h-4" />
-                                            Theme Color
-                                            <span className={styles.settingValue}>{resumeSettings.themeColor}</span>
-                                        </label>
-                                        <div className={styles.colorGrid}>
-                                            {THEME_COLORS.map(color => (
-                                                <button
-                                                    key={color.value}
-                                                    className={`${styles.colorBtn} ${resumeSettings.themeColor === color.value ? styles.colorBtnActive : ''}`}
-                                                    style={{ backgroundColor: color.value }}
-                                                    onClick={() => updateResumeSetting('themeColor', color.value)}
-                                                    title={color.name}
-                                                >
-                                                    {resumeSettings.themeColor === color.value && (
-                                                        <Check className="w-4 h-4 text-white" />
-                                                    )}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
 
                                     {/* Font Family */}
                                     <div className={styles.settingGroup}>
@@ -1200,24 +1796,79 @@ export default function CVBuilderContent({ user, profile }) {
                                         </div>
                                     </div>
 
-                                    {/* Font Size */}
+                                    {/* Font Size - Improved */}
                                     <div className={styles.settingGroup}>
                                         <label className={styles.settingLabel}>
-                                            Font Size (pt)
-                                            <span className={styles.settingValue}>
-                                                {resumeSettings.fontSize === 'compact' ? '10' : resumeSettings.fontSize === 'standard' ? '11' : '12'}
-                                            </span>
+                                            Font Size
                                         </label>
-                                        <div className={styles.sizeToggle}>
-                                            {['compact', 'standard', 'large'].map(size => (
-                                                <button
-                                                    key={size}
-                                                    className={`${styles.sizeBtn} ${resumeSettings.fontSize === size ? styles.sizeBtnActive : ''}`}
-                                                    onClick={() => updateResumeSetting('fontSize', size)}
-                                                >
-                                                    {size.charAt(0).toUpperCase() + size.slice(1)}
-                                                </button>
-                                            ))}
+                                        <div className={styles.fontSizeSelector}>
+                                            <button
+                                                className={`${styles.fontSizeBtn} ${resumeSettings.fontSize === 'compact' && !resumeSettings.customFontSize ? styles.fontSizeBtnActive : ''}`}
+                                                onClick={() => {
+                                                    updateResumeSetting('fontSize', 'compact');
+                                                    updateResumeSetting('customFontSize', null);
+                                                }}
+                                            >
+                                                <span className={styles.fontSizeLabel}>Compact</span>
+                                                <span className={styles.fontSizeValue}>9pt</span>
+                                                <span className={styles.fontSizePreview} style={{ fontSize: '9px' }}>Aa</span>
+                                            </button>
+                                            <button
+                                                className={`${styles.fontSizeBtn} ${resumeSettings.fontSize === 'standard' && !resumeSettings.customFontSize ? styles.fontSizeBtnActive : ''}`}
+                                                onClick={() => {
+                                                    updateResumeSetting('fontSize', 'standard');
+                                                    updateResumeSetting('customFontSize', null);
+                                                }}
+                                            >
+                                                <span className={styles.fontSizeLabel}>Standard</span>
+                                                <span className={styles.fontSizeValue}>11pt</span>
+                                                <span className={styles.fontSizePreview} style={{ fontSize: '11px' }}>Aa</span>
+                                            </button>
+                                            <button
+                                                className={`${styles.fontSizeBtn} ${resumeSettings.fontSize === 'large' && !resumeSettings.customFontSize ? styles.fontSizeBtnActive : ''}`}
+                                                onClick={() => {
+                                                    updateResumeSetting('fontSize', 'large');
+                                                    updateResumeSetting('customFontSize', null);
+                                                }}
+                                            >
+                                                <span className={styles.fontSizeLabel}>Large</span>
+                                                <span className={styles.fontSizeValue}>13pt</span>
+                                                <span className={styles.fontSizePreview} style={{ fontSize: '13px' }}>Aa</span>
+                                            </button>
+                                            <div className={`${styles.fontSizeCustom} ${resumeSettings.customFontSize ? styles.fontSizeCustomActive : ''}`}>
+                                                <span className={styles.fontSizeLabel}>Custom</span>
+                                                <div className={styles.customSizeInput}>
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        pattern="[0-9]*"
+                                                        value={resumeSettings.customFontSize || ''}
+                                                        placeholder="11"
+                                                        className={styles.customSizeField}
+                                                        onChange={(e) => {
+                                                            const rawVal = e.target.value.replace(/[^0-9]/g, '');
+                                                            if (rawVal === '') {
+                                                                updateResumeSetting('customFontSize', null);
+                                                                return;
+                                                            }
+                                                            const val = parseInt(rawVal);
+                                                            if (!isNaN(val)) {
+                                                                // Allow typing, clamp on blur
+                                                                updateResumeSetting('customFontSize', val);
+                                                                updateResumeSetting('fontSize', 'custom');
+                                                            }
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            const val = parseInt(e.target.value);
+                                                            if (!isNaN(val)) {
+                                                                const clamped = Math.min(16, Math.max(8, val));
+                                                                updateResumeSetting('customFontSize', clamped);
+                                                            }
+                                                        }}
+                                                    />
+                                                    <span className={styles.customSizeUnit}>pt</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1250,25 +1901,6 @@ export default function CVBuilderContent({ user, profile }) {
                                         onReorder={setSectionOrder}
                                     />
                                 </div>
-
-                                {/* Template Quick Switch */}
-                                <div className={styles.glassCard}>
-                                    <h3 className={styles.sectionTitle}>
-                                        <Layout className="w-5 h-5 text-accent" />
-                                        Change Template
-                                    </h3>
-                                    <div className={styles.templateQuickGrid}>
-                                        {allTemplates.map(template => (
-                                            <button 
-                                                key={template}
-                                                className={`${styles.templateQuickBtn} ${selectedTemplate === template ? styles.templateQuickBtnActive : ''}`}
-                                                onClick={() => setSelectedTemplate(template)}
-                                            >
-                                                {TEMPLATE_INFO[template]?.name || template}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
                             </div>
                         )}
 
@@ -1281,146 +1913,130 @@ export default function CVBuilderContent({ user, profile }) {
                                 <ChevronLeft className="w-4 h-4" />
                                 Back
                             </button>
-                            {currentStep < 7 && (
+                            {currentStep < 8 && (
                                 <button 
-                                    onClick={() => setCurrentStep(Math.min(7, currentStep + 1))}
+                                    onClick={() => setCurrentStep(Math.min(8, currentStep + 1))}
                                     className={styles.btnPrimary}
                                 >
-                                    {currentStep === 6 ? 'Review CV' : 'Continue'}
+                                    {currentStep === 7 ? 'Review CV' : 'Continue'}
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
                             )}
                         </div>
                     </div>
 
+                    {/* Resize Handle */}
+                    <div 
+                        className={`${styles.resizeHandle} ${isResizing ? styles.resizeHandleActive : ''}`}
+                        onMouseDown={handleResizeStart}
+                    >
+                        <div className={styles.resizeHandleLine}></div>
+                    </div>
+
                     {/* Right Panel - Live Preview */}
-                    <div className={styles.previewPanel}>
+                    <div 
+                        className={styles.previewPanel}
+                        style={{ width: `${100 - leftPanelWidth}%` }}
+                    >
                         <LivePreviewPanel
                             cvData={formData}
                             templateId={selectedTemplate}
                             paperSize={resumeSettings.paperSize}
                             resumeSettings={resumeSettings}
+                            sectionOrder={sectionOrder}
                             showControls={true}
                         />
                     </div>
                 </div>
             )}
 
-            {/* Step 7: Review & Download */}
-            {currentStep === 7 && (
+            {/* Step 8: Review & Download */}
+            {currentStep === 8 && (
                 <div className={styles.reviewSection}>
-                    {/* Success Header */}
-                    <div className={styles.reviewHeader}>
-                        <div className={styles.successIcon}>
-                            <Check className="w-8 h-8" />
-                        </div>
-                        <h2 className={styles.reviewTitle}>Your CV is Ready!</h2>
-                        <p className={styles.reviewSubtitle}>
-                            Review your CV below and download it when you're satisfied
-                        </p>
-                    </div>
-
-                    {/* ATS Score Card */}
-                    <div className={styles.atsScoreCard}>
-                        <div className={styles.atsScoreMain}>
-                            <div className={styles.atsScoreCircle}>
-                                <svg viewBox="0 0 100 100" className={styles.atsScoreSvg}>
-                                    <circle
-                                        cx="50"
-                                        cy="50"
-                                        r="45"
-                                        fill="none"
-                                        stroke="rgba(255,255,255,0.1)"
-                                        strokeWidth="8"
-                                    />
-                                    <circle
-                                        cx="50"
-                                        cy="50"
-                                        r="45"
-                                        fill="none"
-                                        stroke={atsScore?.score >= 80 ? '#22c55e' : atsScore?.score >= 60 ? '#f59e0b' : '#ef4444'}
-                                        strokeWidth="8"
-                                        strokeLinecap="round"
-                                        strokeDasharray={`${(atsScore?.score || 75) * 2.83} 283`}
-                                        transform="rotate(-90 50 50)"
-                                    />
-                                </svg>
-                                <span className={styles.atsScoreValue}>{atsScore?.score || 75}%</span>
-                            </div>
-                            <div className={styles.atsScoreInfo}>
-                                <h3>ATS Compatibility Score</h3>
-                                <p className={atsScore?.score >= 80 ? styles.scoreGood : atsScore?.score >= 60 ? styles.scoreOk : styles.scoreLow}>
-                                    {atsScore?.score >= 80 ? 'Excellent! Your CV is well-optimized for ATS systems.' : 
-                                     atsScore?.score >= 60 ? 'Good, but there\'s room for improvement.' : 
-                                     'Consider adding more keywords and details.'}
-                                </p>
+                    {/* Top Bar with Header, ATS Score, and Actions */}
+                    <div className={styles.reviewTopBar}>
+                        {/* Left: Back & Title */}
+                        <div className={styles.reviewTopLeft}>
+                            <button 
+                                onClick={() => setCurrentStep(7)}
+                                className={styles.btnIconSecondary}
+                                title="Edit Settings"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <div className={styles.reviewTitleCompact}>
+                                <div className={styles.successIconSmall}>
+                                    <Check className="w-4 h-4" />
+                                </div>
+                                <span>Your CV is Ready!</span>
                             </div>
                         </div>
-                        <button 
-                            onClick={() => setCurrentStep(2)}
-                            className={styles.btnSecondary}
-                        >
-                            <Wand2 className="w-4 h-4" />
-                            Improve Score
-                        </button>
-                    </div>
 
-                    {/* Action Buttons */}
-                    <div className={styles.reviewActions}>
-                        <button 
-                            onClick={() => setCurrentStep(6)}
-                            className={styles.btnSecondary}
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                            Edit Settings
-                        </button>
-                        <div className={styles.reviewActionsRight}>
+                        {/* Center: Ready Indicator */}
+                        <div className={styles.atsScoreCompact}>
+                            <div className={styles.readyBadge}>
+                                <Check className="w-5 h-5" />
+                            </div>
+                            <span className={styles.atsScoreLabelSmall}>Ready to Save</span>
+                        </div>
+
+                        {/* Right: Actions */}
+                        <div className={styles.reviewTopRight}>
                             <button 
                                 onClick={handleSaveCV}
                                 disabled={saving}
                                 className={styles.btnSecondary}
                             >
-                                {saving ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Save className="w-4 h-4" />
-                                )}
-                                {saving ? 'Saving...' : 'Save CV'}
+                                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                {saving ? 'Saving...' : 'Save'}
                             </button>
-                            <button 
-                                onClick={downloadPDF}
-                                className={styles.btnPrimary}
-                            >
-                                <Download className="w-4 h-4" />
-                                Download PDF
+                            <button onClick={downloadPDF} className={styles.btnPrimary} disabled={downloading}>
+                                {downloading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Generating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download className="w-4 h-4" />
+                                        Download PDF
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
 
-                    {/* CV Preview - Full Width with Controls */}
-                    <div className={styles.reviewPreviewContainer}>
-                        <LivePreviewPanel
-                            cvData={formData}
-                            templateId={selectedTemplate}
-                            paperSize={resumeSettings.paperSize}
-                            resumeSettings={resumeSettings}
-                            showControls={true}
-                        />
-                    </div>
+                    {/* Main Content: Preview and Sidebar */}
+                    <div className={styles.reviewMainContent}>
+                        {/* CV Preview */}
+                        <div className={styles.reviewPreviewContainer}>
+                            <LivePreviewPanel
+                                cvData={formData}
+                                templateId={selectedTemplate}
+                                paperSize={resumeSettings.paperSize}
+                                resumeSettings={resumeSettings}
+                                sectionOrder={sectionOrder}
+                                showControls={true}
+                                fitToScreen={true}
+                            />
+                        </div>
 
-                    {/* Template Selector (compact) */}
-                    <div className={styles.templateSwitcher}>
-                        <span className={styles.templateSwitcherLabel}>Change Template:</span>
-                        <div className={styles.templateSwitcherBtns}>
-                            {allTemplates.map(template => (
-                                <button 
-                                    key={template}
-                                    className={`${styles.templateBtn} ${selectedTemplate === template ? styles.templateBtnActive : ''}`}
-                                    onClick={() => setSelectedTemplate(template)}
-                                >
-                                    {TEMPLATE_INFO[template]?.name || template}
-                                </button>
-                            ))}
+                        {/* Sidebar: Template Selector */}
+                        <div className={styles.reviewSidebar}>
+                            <div className={styles.templateSwitcherVertical}>
+                                <span className={styles.templateSwitcherLabel}>Templates</span>
+                                <div className={styles.templateSwitcherList}>
+                                    {allTemplates.map(template => (
+                                        <button 
+                                            key={template}
+                                            className={`${styles.templateBtnVertical} ${selectedTemplate === template ? styles.templateBtnActive : ''}`}
+                                            onClick={() => setSelectedTemplate(template)}
+                                        >
+                                            {TEMPLATE_INFO[template]?.name || template}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

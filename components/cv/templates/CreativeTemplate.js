@@ -5,7 +5,7 @@
  * Best for: Design, Marketing, Creative roles
  */
 export default function CreativeTemplate({ cvData }) {
-    const { personalInfo, summary, experience, education, skills } = cvData || {};
+    const { personalInfo, summary, experience, education, skills, projects, certifications } = cvData || {};
 
     const formatDate = (date) => {
         if (!date) return '';
@@ -104,6 +104,33 @@ export default function CreativeTemplate({ cvData }) {
                                     ))}
                                 </section>
                             )}
+
+                            {/* Projects */}
+                            {projects?.some(proj => proj.name || proj.description) && (
+                                <section className="section">
+                                    <h2>
+                                        <span className="icon">🚀</span>
+                                        Projects
+                                    </h2>
+                                    {projects.filter(proj => proj.name || proj.description).map((proj, idx) => (
+                                        <div key={idx} className="project-item">
+                                            <div className="project-header">
+                                                <h3>{proj.name}</h3>
+                                                {proj.date && <span className="year">{proj.date}</span>}
+                                            </div>
+                                            {proj.link && <a href={proj.link} className="proj-link">{proj.link}</a>}
+                                            {proj.description && <p className="desc">{proj.description}</p>}
+                                            {proj.technologies?.length > 0 && (
+                                                <div className="proj-tech">
+                                                    {proj.technologies.map((tech, i) => (
+                                                        <span key={i} className="tech-tag">{tech}</span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </section>
+                            )}
                         </div>
 
                         <div className="side-column">
@@ -150,6 +177,25 @@ export default function CreativeTemplate({ cvData }) {
                                     <ul className="cert-list">
                                         {skills.certifications.map((cert, i) => (
                                             <li key={i}>{cert}</li>
+                                        ))}
+                                    </ul>
+                                </section>
+                            )}
+
+                            {/* New Certifications with details */}
+                            {certifications?.some(cert => cert.name) && (
+                                <section className="section">
+                                    <h2>
+                                        <span className="icon">🏆</span>
+                                        Certifications
+                                    </h2>
+                                    <ul className="cert-list detailed">
+                                        {certifications.filter(cert => cert.name).map((cert, i) => (
+                                            <li key={i}>
+                                                <span className="cert-name">{cert.name}</span>
+                                                {cert.issuer && <span className="cert-issuer">{cert.issuer}</span>}
+                                                {cert.date && <span className="cert-date">{cert.date}</span>}
+                                            </li>
                                         ))}
                                     </ul>
                                 </section>
@@ -430,6 +476,71 @@ export default function CreativeTemplate({ cvData }) {
                 .cert-list li {
                     padding: 4px 0;
                     border-bottom: 1px dotted #e5e7eb;
+                }
+
+                .cert-list.detailed li {
+                    padding: 6px 0;
+                }
+
+                .cert-name {
+                    display: block;
+                    font-weight: 600;
+                }
+
+                .cert-issuer {
+                    display: block;
+                    font-size: 9px;
+                    opacity: 0.8;
+                    margin-top: 2px;
+                }
+
+                .cert-date {
+                    display: block;
+                    font-size: 9px;
+                    opacity: 0.6;
+                }
+
+                .project-item {
+                    margin-bottom: 14px;
+                }
+
+                .project-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: baseline;
+                }
+
+                .project-item h3 {
+                    font-size: 13px;
+                    font-weight: 600;
+                    margin: 0;
+                }
+
+                .proj-link {
+                    font-size: 10px;
+                    color: #f59e0b;
+                    text-decoration: none;
+                    display: block;
+                    margin: 2px 0 4px 0;
+                }
+
+                .proj-link:hover {
+                    text-decoration: underline;
+                }
+
+                .proj-tech {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 4px;
+                    margin-top: 6px;
+                }
+
+                .tech-tag {
+                    font-size: 9px;
+                    padding: 2px 6px;
+                    background: #fef3c7;
+                    color: #92400e;
+                    border-radius: 4px;
                 }
             `}</style>
         </div>

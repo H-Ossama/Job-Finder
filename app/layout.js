@@ -19,6 +19,11 @@ const playfair = Playfair_Display({
 export const metadata = {
     title: 'CareerForge AI — Build Your Future, Automatically',
     description: 'Stop writing resumes. Start landing interviews. Our AI crafts perfect CVs while automatically matching you with your dream jobs.',
+    icons: {
+        icon: '/favicon.svg',
+        shortcut: '/favicon.svg',
+        apple: '/apple-touch-icon.svg',
+    },
 };
 
 export default function RootLayout({ children }) {

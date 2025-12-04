@@ -6,7 +6,7 @@
  * Best for: Creative, Tech, Marketing roles
  */
 export default function PikachuTemplate({ cvData }) {
-    const { personalInfo, summary, experience, education, skills, projects, awards } = cvData || {};
+    const { personalInfo, summary, experience, education, skills, projects, awards, certifications } = cvData || {};
 
     const formatDate = (date) => {
         if (!date) return '';
@@ -149,8 +149,8 @@ export default function PikachuTemplate({ cvData }) {
                                         {project.description && <p className="entry-desc">{project.description}</p>}
                                         {project.technologies && (
                                             <div className="tech-tags">
-                                                {project.technologies.split(',').map((tech, i) => (
-                                                    <span key={i} className="tech-tag">{tech.trim()}</span>
+                                                {(Array.isArray(project.technologies) ? project.technologies : project.technologies.split(',')).map((tech, i) => (
+                                                    <span key={i} className="tech-tag">{typeof tech === 'string' ? tech.trim() : tech}</span>
                                                 ))}
                                             </div>
                                         )}
@@ -241,6 +241,26 @@ export default function PikachuTemplate({ cvData }) {
                                         <h3 className="entry-title">{award.title}</h3>
                                         <p className="entry-org">{award.issuer}</p>
                                         <span className="entry-date">{award.date}</span>
+                                    </div>
+                                ))}
+                            </section>
+                        )}
+
+                        {/* Certifications */}
+                        {certifications?.some(cert => cert.name) && (
+                            <section className="cv-section">
+                                <h2 className="section-title">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" className="section-icon">
+                                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                                    </svg>
+                                    Certifications
+                                </h2>
+                                {certifications.filter(cert => cert.name).map((cert, idx) => (
+                                    <div key={idx} className="entry compact">
+                                        <h3 className="entry-title">{cert.name}</h3>
+                                        {cert.issuer && <p className="entry-org">{cert.issuer}</p>}
+                                        {cert.date && <span className="entry-date">{formatDate(cert.date)}</span>}
+                                        {cert.credentialId && <p className="entry-credential">ID: {cert.credentialId}</p>}
                                     </div>
                                 ))}
                             </section>
@@ -495,6 +515,12 @@ export default function PikachuTemplate({ cvData }) {
                     background: #fef2f2;
                     color: #dc2626;
                     border: 1px solid #fecaca;
+                }
+
+                .entry-credential {
+                    font-size: 8pt;
+                    color: #888;
+                    margin: 2px 0 0 0;
                 }
 
                 @media print {

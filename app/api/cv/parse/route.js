@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import mammoth from 'mammoth';
-import { parseCV } from '@/utils/ai/client';
+import { parseCV } from '@/utils/ai/openrouter';
 
 /**
  * CV Parse API - Upload and parse existing CV
@@ -23,16 +23,15 @@ export async function POST(request) {
 
         // Parse based on file type
         if (file.type === 'application/pdf') {
-            // PDF parsing - using a simpler approach for now
-            // Note: pdf-parse has issues in Edge runtime, so we'll use fallback
+            // PDF parsing - use the lib directly to avoid test runner issues
             try {
-                const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+                const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')).default;
                 const data = await pdfParse(buffer);
                 text = data.text;
             } catch (pdfError) {
                 console.error('PDF parsing error:', pdfError);
                 return NextResponse.json(
-                    { error: 'PDF parsing is currently unavailable. Please use Word document (.docx)' },
+                    { error: 'PDF parsing failed. Please ensure the PDF contains selectable text (not just images).' },
                     { status: 400 }
                 );
             }
@@ -93,7 +92,7 @@ export async function POST(request) {
 function analyzeMissingFields(data) {
     const missing = [];
 
-    // Check personal info
+    // Check personal info (Step 2)
     if (!data.personalInfo?.firstName || !data.personalInfo?.lastName) {
         missing.push({ field: 'name', step: 2, message: 'Your name is missing' });
     }
@@ -104,7 +103,12 @@ function analyzeMissingFields(data) {
         missing.push({ field: 'phone', step: 2, message: 'Phone number is missing' });
     }
 
-    // Check experience
+    // Check summary (Step 2)
+    if (!data.summary || data.summary.length < 50) {
+        missing.push({ field: 'summary', step: 2, message: 'Professional summary is too short or missing' });
+    }
+
+    // Check experience (Step 3)
     if (!data.experience || data.experience.length === 0) {
         missing.push({ field: 'experience', step: 3, message: 'Work experience is missing' });
     } else {
@@ -114,7 +118,7 @@ function analyzeMissingFields(data) {
         }
     }
 
-    // Check education
+    // Check education (Step 4)
     if (!data.education || data.education.length === 0) {
         missing.push({ field: 'education', step: 4, message: 'Education is missing' });
     } else {
@@ -124,15 +128,12 @@ function analyzeMissingFields(data) {
         }
     }
 
-    // Check skills
+    // Check skills (Step 5)
     if (!data.skills?.technical || data.skills.technical.length === 0) {
         missing.push({ field: 'skills', step: 5, message: 'Technical skills are missing' });
     }
 
-    // Check summary
-    if (!data.summary || data.summary.length < 50) {
-        missing.push({ field: 'summary', step: 2, message: 'Professional summary is too short or missing' });
-    }
+    // Projects are optional (Step 6) - no missing field for this
 
     return missing;
 }
@@ -142,7 +143,7 @@ function analyzeMissingFields(data) {
  */
 function determineStartStep(missingFields) {
     if (missingFields.length === 0) {
-        return 6; // Go directly to settings
+        return 7; // Go directly to settings (step 7)
     }
 
     // Find the earliest step with missing data

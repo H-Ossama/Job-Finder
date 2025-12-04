@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import mammoth from 'mammoth'
-import { parseCV } from '@/utils/ai/client'
+import { parseCV } from '@/utils/ai/openrouter'
 
 // PDF parsing is temporarily disabled due to build issues with pdf-parse in Next.js
 // const pdf = require('pdf-parse');
@@ -22,12 +22,18 @@ export async function POST(request) {
 
         // Parse based on file type
         if (file.type === 'application/pdf') {
-            // const data = await pdf(buffer)
-            // text = data.text
-            return NextResponse.json(
-                { error: 'PDF parsing is currently unavailable. Please use DOCX.' },
-                { status: 400 }
-            )
+            // PDF parsing - use the lib directly to avoid test runner issues
+            try {
+                const pdfParse = (await import('pdf-parse/lib/pdf-parse.js')).default;
+                const data = await pdfParse(buffer);
+                text = data.text;
+            } catch (pdfError) {
+                console.error('PDF parsing error:', pdfError);
+                return NextResponse.json(
+                    { error: 'PDF parsing failed. Please ensure the PDF contains selectable text (not just images).' },
+                    { status: 400 }
+                );
+            }
         } else if (
             file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
             file.name.endsWith('.docx')

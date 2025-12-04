@@ -5,7 +5,7 @@
  * Best for: C-Level, Directors, Senior Management
  */
 export default function ExecutiveTemplate({ cvData }) {
-    const { personalInfo, summary, experience, education, skills } = cvData || {};
+    const { personalInfo, summary, experience, education, skills, projects, certifications } = cvData || {};
 
     const formatDate = (date) => {
         if (!date) return '';
@@ -133,6 +133,48 @@ export default function ExecutiveTemplate({ cvData }) {
                                     {skills.certifications.join(' · ')}
                                 </div>
                             )}
+                        </section>
+                    )}
+
+                    {/* Projects */}
+                    {projects?.some(proj => proj.name || proj.description) && (
+                        <section className="section">
+                            <h2>Key Projects</h2>
+                            {projects.filter(proj => proj.name || proj.description).map((proj, idx) => (
+                                <div key={idx} className="project-entry">
+                                    <div className="proj-header">
+                                        <h4>{proj.name}</h4>
+                                        {proj.date && <span className="proj-date">{proj.date}</span>}
+                                    </div>
+                                    {proj.description && <p className="proj-desc">{proj.description}</p>}
+                                    {proj.technologies?.length > 0 && (
+                                        <div className="proj-tech">
+                                            {proj.technologies.map((tech, i) => (
+                                                <span key={i} className="tech-badge">{tech}</span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </section>
+                    )}
+
+                    {/* Detailed Certifications */}
+                    {certifications?.some(cert => cert.name) && (
+                        <section className="section">
+                            <h2>Professional Certifications</h2>
+                            <div className="detailed-certs">
+                                {certifications.filter(cert => cert.name).map((cert, idx) => (
+                                    <div key={idx} className="cert-entry">
+                                        <span className="cert-badge">✓</span>
+                                        <div className="cert-info">
+                                            <span className="cert-title">{cert.name}</span>
+                                            {cert.issuer && <span className="cert-issuer">{cert.issuer}</span>}
+                                            {cert.date && <span className="cert-date">{formatDate(cert.date)}</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </section>
                     )}
                 </div>
@@ -359,6 +401,92 @@ export default function ExecutiveTemplate({ cvData }) {
                 .cert-label {
                     font-weight: 600;
                     color: #475569;
+                }
+
+                .project-entry {
+                    margin-bottom: 14px;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+
+                .project-entry:last-child {
+                    border-bottom: none;
+                }
+
+                .proj-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: baseline;
+                }
+
+                .project-entry h4 {
+                    font-size: 13px;
+                    font-weight: 600;
+                    margin: 0;
+                    color: #1e293b;
+                }
+
+                .proj-date {
+                    font-size: 10px;
+                    color: #94a3b8;
+                }
+
+                .proj-desc {
+                    font-size: 11px;
+                    color: #64748b;
+                    margin: 4px 0 8px 0;
+                    line-height: 1.5;
+                }
+
+                .proj-tech {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 4px;
+                }
+
+                .tech-badge {
+                    font-size: 9px;
+                    padding: 2px 8px;
+                    background: #f1f5f9;
+                    color: #475569;
+                    border-radius: 2px;
+                }
+
+                .detailed-certs {
+                    display: grid;
+                    gap: 10px;
+                }
+
+                .cert-entry {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                }
+
+                .cert-badge {
+                    color: #f59e0b;
+                    font-weight: bold;
+                }
+
+                .cert-info {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .cert-title {
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #1e293b;
+                }
+
+                .cert-issuer {
+                    font-size: 11px;
+                    color: #64748b;
+                }
+
+                .cert-date {
+                    font-size: 10px;
+                    color: #94a3b8;
                 }
             `}</style>
         </div>

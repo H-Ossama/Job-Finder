@@ -59,7 +59,7 @@ function StatCard({ icon: Icon, iconBg, label, value, badge, badgeColor, delay }
 // CV Preview Card Component
 function CVPreviewCard({ cv }) {
     return (
-        <Link href={`/cv-builder/edit/${cv.id}`} className="cv-card">
+        <Link href={`/cv-builder?edit=${cv.id}`} className="cv-card">
             <div className="cv-preview-card mb-4">
                 <div className="flex gap-3 mb-4">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500/30 to-purple-500/30"></div>
@@ -83,7 +83,7 @@ function CVPreviewCard({ cv }) {
                 <div>
                     <h4 className="font-medium text-sm">{cv.title || 'Untitled CV'}</h4>
                     <p className="text-xs text-gray-400">
-                        Updated {new Date(cv.updated_at || cv.created_at).toLocaleDateString()}
+                        Created {new Date(cv.created_at).toLocaleDateString()}
                     </p>
                 </div>
                 <span className="tag tag-success text-xs">92%</span>
@@ -95,7 +95,7 @@ function CVPreviewCard({ cv }) {
 // Create New CV Card
 function CreateCVCard() {
     return (
-        <Link href="/cv-builder/create" className="cv-card border-dashed flex flex-col items-center justify-center text-center min-h-[280px]">
+        <Link href="/cv-builder" className="cv-card border-dashed flex flex-col items-center justify-center text-center min-h-[280px]">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mb-4">
                 <Plus className="w-7 h-7 text-indigo-400" />
             </div>
@@ -255,7 +255,7 @@ export default function DashboardContent({ user, cvs, applications }) {
                 <div className="lg:col-span-2">
                     <div className="flex items-center justify-between mb-5">
                         <h2 className="text-lg font-semibold">Your CVs</h2>
-                        <Link href="/cv-builder/create" className="btn-secondary px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
+                        <Link href="/cv-builder" className="btn-secondary px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
                             <Plus className="w-4 h-4" />
                             New CV
                         </Link>

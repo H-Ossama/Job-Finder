@@ -5,7 +5,7 @@
  * Best for: Tech, Startup, Creative roles
  */
 export default function ModernTemplate({ cvData, themeColor = '#667eea', fontFamily = 'Inter' }) {
-    const { personalInfo, summary, experience, education, skills } = cvData || {};
+    const { personalInfo, summary, experience, education, skills, projects, certifications } = cvData || {};
     
     // Use theme color for accents
     const accentColor = themeColor;
@@ -122,6 +122,54 @@ export default function ModernTemplate({ cvData, themeColor = '#667eea', fontFam
                                 </div>
                             )}
                         </div>
+                    </section>
+                )}
+
+                {/* Projects */}
+                {projects?.some(proj => proj.name || proj.description) && (
+                    <section className="cv-section">
+                        <h2>Projects</h2>
+                        {projects.filter(proj => proj.name || proj.description).map((proj, idx) => (
+                            <div key={idx} className="project-item">
+                                <div className="proj-header">
+                                    <div>
+                                        <h3>{proj.name}</h3>
+                                        {proj.link && <a href={proj.link} className="proj-link">{proj.link}</a>}
+                                    </div>
+                                    {proj.date && <span className="date">{proj.date}</span>}
+                                </div>
+                                {proj.description && <p className="description">{proj.description}</p>}
+                                {proj.technologies?.length > 0 && (
+                                    <div className="proj-tech">
+                                        {proj.technologies.map((tech, i) => (
+                                            <span key={i} className="tech-tag">{tech}</span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </section>
+                )}
+
+                {/* Certifications */}
+                {certifications?.some(cert => cert.name) && (
+                    <section className="cv-section">
+                        <h2>Certifications</h2>
+                        {certifications.filter(cert => cert.name).map((cert, idx) => (
+                            <div key={idx} className="cert-item">
+                                <div className="cert-header">
+                                    <div>
+                                        <h3>{cert.name}</h3>
+                                        {cert.issuer && <p className="issuer">{cert.issuer}</p>}
+                                    </div>
+                                    <span className="date">
+                                        {cert.date && formatDate(cert.date)}
+                                        {cert.expiry && ` – ${formatDate(cert.expiry)}`}
+                                    </span>
+                                </div>
+                                {cert.credentialId && <p className="credential-id">Credential ID: {cert.credentialId}</p>}
+                            </div>
+                        ))}
                     </section>
                 )}
             </main>
@@ -289,6 +337,63 @@ export default function ModernTemplate({ cvData, themeColor = '#667eea', fontFam
                 .skill-tag.soft {
                     background: #f0f0f0;
                     color: #555;
+                }
+
+                .project-item, .cert-item {
+                    margin-bottom: 20px;
+                }
+
+                .proj-header, .cert-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 8px;
+                }
+
+                .project-item h3, .cert-item h3 {
+                    font-size: 15px;
+                    font-weight: 600;
+                    margin: 0;
+                    color: #1a1a2e;
+                }
+
+                .proj-link {
+                    font-size: 11px;
+                    color: ${accentColor};
+                    text-decoration: none;
+                    display: block;
+                    margin-top: 2px;
+                }
+
+                .proj-link:hover {
+                    text-decoration: underline;
+                }
+
+                .proj-tech {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 6px;
+                    margin-top: 8px;
+                }
+
+                .tech-tag {
+                    font-size: 10px;
+                    padding: 3px 8px;
+                    background: #f0f0f0;
+                    color: #555;
+                    border-radius: 4px;
+                }
+
+                .issuer {
+                    font-size: 13px;
+                    color: ${accentColor};
+                    margin: 2px 0 0 0;
+                }
+
+                .credential-id {
+                    font-size: 11px;
+                    color: #888;
+                    margin: 4px 0 0 0;
                 }
             `}</style>
         </div>

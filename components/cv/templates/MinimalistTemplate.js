@@ -5,7 +5,7 @@
  * Best for: Academic, Research, Technical writing
  */
 export default function MinimalistTemplate({ cvData }) {
-    const { personalInfo, summary, experience, education, skills } = cvData || {};
+    const { personalInfo, summary, experience, education, skills, projects, certifications } = cvData || {};
 
     const formatDate = (date) => {
         if (!date) return '';
@@ -99,6 +99,46 @@ export default function MinimalistTemplate({ cvData }) {
                         {skills?.certifications?.length > 0 && (
                             <p><strong>Certifications:</strong> {skills.certifications.join(', ')}</p>
                         )}
+                    </section>
+                )}
+
+                {/* Projects */}
+                {projects?.some(proj => proj.name || proj.description) && (
+                    <section>
+                        <h2>Projects</h2>
+                        {projects.filter(proj => proj.name || proj.description).map((proj, idx) => (
+                            <div key={idx} className="entry">
+                                <div className="entry-header">
+                                    <span className="entry-title">
+                                        <strong>{proj.name}</strong>
+                                        {proj.link && <a href={proj.link} className="proj-link"> ↗</a>}
+                                    </span>
+                                    {proj.date && <span className="entry-date">{proj.date}</span>}
+                                </div>
+                                {proj.description && <p>{proj.description}</p>}
+                                {proj.technologies?.length > 0 && (
+                                    <p className="tech-line"><strong>Technologies:</strong> {proj.technologies.join(', ')}</p>
+                                )}
+                            </div>
+                        ))}
+                    </section>
+                )}
+
+                {/* Certifications */}
+                {certifications?.some(cert => cert.name) && (
+                    <section>
+                        <h2>Certifications</h2>
+                        {certifications.filter(cert => cert.name).map((cert, idx) => (
+                            <div key={idx} className="entry">
+                                <div className="entry-header">
+                                    <span className="entry-title">
+                                        <strong>{cert.name}</strong>{cert.issuer ? ` — ${cert.issuer}` : ''}
+                                    </span>
+                                    {cert.date && <span className="entry-date">{formatDate(cert.date)}</span>}
+                                </div>
+                                {cert.credentialId && <p className="credential">Credential ID: {cert.credentialId}</p>}
+                            </div>
+                        ))}
                     </section>
                 )}
             </div>
@@ -213,6 +253,28 @@ export default function MinimalistTemplate({ cvData }) {
                 section > p strong {
                     font-weight: 600;
                     color: #111;
+                }
+
+                .proj-link {
+                    color: #555;
+                    text-decoration: none;
+                    font-size: 11px;
+                }
+
+                .proj-link:hover {
+                    text-decoration: underline;
+                }
+
+                .tech-line {
+                    font-size: 11px;
+                    color: #666;
+                    margin: 4px 0 0 0;
+                }
+
+                .credential {
+                    font-size: 10px;
+                    color: #777;
+                    margin: 2px 0 0 0;
                 }
             `}</style>
         </div>

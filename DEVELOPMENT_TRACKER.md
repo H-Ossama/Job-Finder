@@ -81,4 +81,12 @@
 
 ---
 
-*Last Updated: January 2025*
+## 🔒 Security Updates
+
+| Date | Issue | Resolution |
+|------|-------|------------|
+| December 2025 | Hardcoded Gemini API key in `utils/ai/gemini.js` | Removed hardcoded key, now requires `GEMINI_API_KEY` env variable |
+
+---
+
+*Last Updated: December 2025*

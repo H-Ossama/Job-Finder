@@ -150,6 +150,22 @@ export default function BronzorTemplate({ cvData }) {
                             </div>
                         </div>
                     )}
+
+                    {/* Detailed Certifications */}
+                    {certifications?.some(cert => cert.name) && (
+                        <div className="sidebar-section">
+                            <h3 className="sidebar-title">Certifications</h3>
+                            <div className="cert-list detailed">
+                                {certifications.filter(cert => cert.name).map((cert, i) => (
+                                    <div key={i} className="cert-item detailed">
+                                        <span className="cert-name">{cert.name}</span>
+                                        {cert.issuer && <span className="cert-issuer">{cert.issuer}</span>}
+                                        {cert.date && <span className="cert-date">{formatDate(cert.date)}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </aside>
 
                 {/* Main Content */}
@@ -232,11 +248,12 @@ export default function BronzorTemplate({ cvData }) {
                                     {project.description && <p className="entry-desc">{project.description}</p>}
                                     {project.technologies && (
                                         <div className="tech-tags">
-                                            {project.technologies.split(',').map((tech, i) => (
-                                                <span key={i} className="tech-tag">{tech.trim()}</span>
+                                            {(Array.isArray(project.technologies) ? project.technologies : project.technologies.split(',')).map((tech, i) => (
+                                                <span key={i} className="tech-tag">{typeof tech === 'string' ? tech.trim() : tech}</span>
                                             ))}
                                         </div>
                                     )}
+                                    {(project.link || project.url) && <p className="entry-link">{project.link || project.url}</p>}
                                 </div>
                             ))}
                         </section>
@@ -402,6 +419,37 @@ export default function BronzorTemplate({ cvData }) {
                     color: #cbd5e1;
                     padding-left: 10px;
                     border-left: 2px solid #f59e0b;
+                }
+
+                .cert-item.detailed {
+                    padding: 6px 0 6px 10px;
+                    margin-bottom: 4px;
+                }
+
+                .cert-name {
+                    display: block;
+                    font-weight: 600;
+                    color: #e2e8f0;
+                }
+
+                .cert-issuer {
+                    display: block;
+                    font-size: 8pt;
+                    color: #94a3b8;
+                    margin-top: 2px;
+                }
+
+                .cert-date {
+                    display: block;
+                    font-size: 7.5pt;
+                    color: #64748b;
+                    margin-top: 2px;
+                }
+
+                .entry-link {
+                    font-size: 8.5pt;
+                    color: #f59e0b;
+                    margin: 4px 0 0 0;
                 }
 
                 .main-content {

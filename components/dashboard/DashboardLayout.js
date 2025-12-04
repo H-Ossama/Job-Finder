@@ -3,14 +3,15 @@ import { useState } from 'react';
 import DashboardSidebar from './DashboardSidebar';
 import DashboardHeader from './DashboardHeader';
 
-export default function DashboardLayout({ children, user, profile }) {
+export default function DashboardLayout({ children, user, profile, cvCount = 0 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
         <div className="dashboard-wrapper">
             <DashboardSidebar 
                 isOpen={sidebarOpen} 
-                onClose={() => setSidebarOpen(false)} 
+                onClose={() => setSidebarOpen(false)}
+                cvCount={cvCount}
             />
             
             <DashboardHeader 

@@ -13,19 +13,18 @@ import {
     BarChart3, 
     User, 
     Settings,
-    Sparkles,
-    Zap
+    Sparkles
 } from 'lucide-react';
 
-const mainLinks = [
+const getMainLinks = (cvCount) => [
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
-    { href: '/resumes', icon: FileText, label: 'My CVs', badge: '3', badgeColor: 'indigo' },
-    { href: '/jobs', icon: Briefcase, label: 'Job Matches', badge: '12', badgeColor: 'green' },
+    { href: '/resumes', icon: FileText, label: 'My CVs', badge: cvCount > 0 ? cvCount.toString() : null, badgeColor: 'indigo' },
+    { href: '/jobs', icon: Briefcase, label: 'Job Matches' },
     { href: '/applications', icon: ClipboardCheck, label: 'Applications' },
 ];
 
 const toolLinks = [
-    { href: '/cv-builder/create', icon: Lightbulb, label: 'AI CV Builder' },
+    { href: '/cv-builder', icon: Lightbulb, label: 'AI CV Builder' },
     { href: '/job-search', icon: Search, label: 'Job Search' },
     { href: '/interview-prep', icon: Calendar, label: 'Interview Prep' },
     { href: '/analytics', icon: BarChart3, label: 'Analytics' },
@@ -36,8 +35,9 @@ const settingsLinks = [
     { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 
-export default function DashboardSidebar({ isOpen, onClose }) {
+export default function DashboardSidebar({ isOpen, onClose, cvCount = 0 }) {
     const pathname = usePathname();
+    const mainLinks = getMainLinks(cvCount);
 
     const isActive = (href) => {
         if (href === '/dashboard') return pathname === '/dashboard';
@@ -58,7 +58,7 @@ export default function DashboardSidebar({ isOpen, onClose }) {
                 <div className="p-6 border-b border-white/5">
                     <Link href="/" className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl logo-gradient flex items-center justify-center">
-                            <Zap className="w-6 h-6 text-white" />
+                            <Briefcase className="w-6 h-6 text-white" />
                         </div>
                         <span className="text-lg font-bold">
                             CareerForge<span className="text-accent">.ai</span>

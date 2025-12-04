@@ -8,7 +8,6 @@ import dynamic from 'next/dynamic';
  * This prevents the 1.95MB page data error
  */
 const ModernTemplate = dynamic(() => import('./templates/ModernTemplate'), { ssr: false });
-const ProfessionalTemplate = dynamic(() => import('./templates/ProfessionalTemplate'), { ssr: false });
 const CreativeTemplate = dynamic(() => import('./templates/CreativeTemplate'), { ssr: false });
 const MinimalistTemplate = dynamic(() => import('./templates/MinimalistTemplate'), { ssr: false });
 const ExecutiveTemplate = dynamic(() => import('./templates/ExecutiveTemplate'), { ssr: false });
@@ -17,7 +16,6 @@ const AwesomeTemplate = dynamic(() => import('./templates/AwesomeTemplate'), { s
 const PikachuTemplate = dynamic(() => import('./templates/PikachuTemplate'), { ssr: false });
 const OnyxTemplate = dynamic(() => import('./templates/OnyxTemplate'), { ssr: false });
 const AzurillTemplate = dynamic(() => import('./templates/AzurillTemplate'), { ssr: false });
-const BronzorTemplate = dynamic(() => import('./templates/BronzorTemplate'), { ssr: false });
 
 /**
  * Template Component Map
@@ -26,7 +24,6 @@ const BronzorTemplate = dynamic(() => import('./templates/BronzorTemplate'), { s
 const TEMPLATE_MAP = {
     // Original templates
     modern: ModernTemplate,
-    professional: ProfessionalTemplate,
     creative: CreativeTemplate,
     minimalist: MinimalistTemplate,
     executive: ExecutiveTemplate,
@@ -35,8 +32,7 @@ const TEMPLATE_MAP = {
     awesome: AwesomeTemplate,
     pikachu: PikachuTemplate,
     onyx: OnyxTemplate,
-    azurill: AzurillTemplate,
-    bronzor: BronzorTemplate
+    azurill: AzurillTemplate
 };
 
 /**
@@ -56,7 +52,8 @@ export default function CVPreview({
     templateId = 'modern', 
     scale = 1,
     paperSize = 'letter',
-    resumeSettings = {}
+    resumeSettings = {},
+    sectionOrder = []
 }) {
     // Get the appropriate template component
     const TemplateComponent = useMemo(() => {
@@ -70,16 +67,50 @@ export default function CVPreview({
     const settings = {
         fontFamily: resumeSettings.fontFamily || 'Roboto',
         fontSize: resumeSettings.fontSize || 'standard',
+        customFontSize: resumeSettings.customFontSize || null,
         themeColor: resumeSettings.themeColor || '#ef4444',
         ...resumeSettings
     };
 
-    // Font size multipliers
-    const fontSizeMultiplier = {
-        compact: 0.9,
-        standard: 1,
-        large: 1.1
-    }[settings.fontSize] || 1;
+    // Font size multipliers - support custom font size
+    let fontSizeMultiplier;
+    if (settings.customFontSize && settings.fontSize === 'custom') {
+        // Custom font size: base is 11pt = 1em, so calculate ratio
+        fontSizeMultiplier = settings.customFontSize / 11;
+    } else {
+        fontSizeMultiplier = {
+            compact: 0.82,    // ~9pt
+            standard: 1,      // ~11pt
+            large: 1.18       // ~13pt
+        }[settings.fontSize] || 1;
+    }
+
+    // Filter cvData based on sectionOrder visibility
+    const filteredCvData = useMemo(() => {
+        if (!sectionOrder || sectionOrder.length === 0) return cvData;
+        
+        // Create a map of section visibility
+        const visibilityMap = {};
+        sectionOrder.forEach(section => {
+            visibilityMap[section.id] = section.visible !== false;
+        });
+
+        return {
+            ...cvData,
+            // Hide summary if not visible
+            summary: visibilityMap.summary !== false ? cvData.summary : '',
+            // Hide experience if not visible
+            experience: visibilityMap.experience !== false ? cvData.experience : [],
+            // Hide education if not visible
+            education: visibilityMap.education !== false ? cvData.education : [],
+            // Hide skills if not visible
+            skills: visibilityMap.skills !== false ? cvData.skills : { technical: [], soft: [], languages: [], certifications: [] },
+            // Hide projects if not visible
+            projects: visibilityMap.projects !== false ? cvData.projects : [],
+            // Hide certifications if not visible
+            certifications: visibilityMap.certifications !== false ? cvData.certifications : []
+        };
+    }, [cvData, sectionOrder]);
 
     // Loading placeholder component
     const LoadingPlaceholder = () => (
@@ -117,9 +148,10 @@ export default function CVPreview({
             >
                 <Suspense fallback={<LoadingPlaceholder />}>
                     <TemplateComponent 
-                        cvData={cvData} 
+                        cvData={filteredCvData} 
                         themeColor={settings.themeColor}
                         fontFamily={settings.fontFamily}
+                        sectionOrder={sectionOrder}
                     />
                 </Suspense>
             </div>

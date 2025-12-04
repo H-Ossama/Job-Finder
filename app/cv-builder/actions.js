@@ -20,22 +20,42 @@ export async function saveCV(cvData) {
     // Calculate completeness score
     const completeness = calculateCompleteness(cvData.content || {})
 
+    // Build insert data - only use columns that exist in the database
+    // Note: template and ats_score columns may not exist - we'll try to update them separately
+    const insertData = {
+        user_id: user.id,
+        title: cvData.title,
+        content: cvData.content,
+        is_primary: cvData.is_primary || false
+    }
+
     const { data, error } = await supabase
         .from('cvs')
-        .insert({
-            user_id: user.id,
-            title: cvData.title,
-            content: cvData.content,
-            template: cvData.template || 'modern',
-            ats_score: cvData.ats_score || completeness.score,
-            is_primary: cvData.is_primary || false
-        })
+        .insert(insertData)
         .select()
         .single()
 
     if (error) {
         console.error('Error saving CV:', error)
         throw new Error('Failed to save CV')
+    }
+
+    // Try to update optional columns separately (will silently fail if columns don't exist)
+    try {
+        const optionalUpdates = {}
+        if (cvData.template) optionalUpdates.template = cvData.template
+        if (cvData.ats_score !== undefined) optionalUpdates.ats_score = cvData.ats_score
+        else optionalUpdates.ats_score = completeness.score
+        
+        if (Object.keys(optionalUpdates).length > 0) {
+            await supabase
+                .from('cvs')
+                .update(optionalUpdates)
+                .eq('id', data.id)
+        }
+    } catch (e) {
+        // Optional columns might not exist yet - that's okay
+        console.log('Optional columns not available:', e.message)
     }
 
     revalidatePath('/dashboard')
@@ -55,19 +75,17 @@ export async function updateCV(id, cvData) {
         throw new Error('User not authenticated')
     }
 
-    // Calculate completeness score
-    const completeness = calculateCompleteness(cvData.content || {})
+    // Build update data - only use columns that definitely exist
+    const updateData = {
+        title: cvData.title,
+        content: cvData.content,
+        is_primary: cvData.is_primary,
+        updated_at: new Date().toISOString()
+    }
 
     const { data, error } = await supabase
         .from('cvs')
-        .update({
-            title: cvData.title,
-            content: cvData.content,
-            template: cvData.template,
-            ats_score: cvData.ats_score || completeness.score,
-            is_primary: cvData.is_primary,
-            updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
@@ -78,9 +96,29 @@ export async function updateCV(id, cvData) {
         throw new Error('Failed to update CV')
     }
 
+    // Try to update optional columns separately if provided
+    try {
+        const optionalUpdates = {}
+        if (cvData.template) optionalUpdates.template = cvData.template
+        if (cvData.ats_score !== undefined) {
+            const completeness = calculateCompleteness(cvData.content || {})
+            optionalUpdates.ats_score = cvData.ats_score || completeness.score
+        }
+        
+        if (Object.keys(optionalUpdates).length > 0) {
+            await supabase
+                .from('cvs')
+                .update(optionalUpdates)
+                .eq('id', id)
+        }
+    } catch (e) {
+        // Optional columns might not exist yet
+        console.log('Optional columns not available:', e.message)
+    }
+
     revalidatePath('/dashboard')
     revalidatePath('/resumes')
-    revalidatePath(`/cv-builder/edit/${id}`)
+    revalidatePath(`/cv-builder/result/${id}`)
     return data
 }
 
@@ -225,23 +263,40 @@ export async function duplicateCV(id) {
         throw new Error('CV not found')
     }
 
-    // Create a copy
+    // Create a copy without optional columns initially
+    const insertData = {
+        user_id: user.id,
+        title: `${original.title} (Copy)`,
+        content: original.content,
+        is_primary: false
+    }
+
     const { data, error } = await supabase
         .from('cvs')
-        .insert({
-            user_id: user.id,
-            title: `${original.title} (Copy)`,
-            content: original.content,
-            template: original.template,
-            ats_score: original.ats_score,
-            is_primary: false
-        })
+        .insert(insertData)
         .select()
         .single()
 
     if (error) {
         console.error('Error duplicating CV:', error)
         throw new Error('Failed to duplicate CV')
+    }
+
+    // Try to copy optional columns if they exist
+    try {
+        const optionalUpdates = {}
+        if (original.template) optionalUpdates.template = original.template
+        if (original.ats_score) optionalUpdates.ats_score = original.ats_score
+        
+        if (Object.keys(optionalUpdates).length > 0) {
+            await supabase
+                .from('cvs')
+                .update(optionalUpdates)
+                .eq('id', data.id)
+        }
+    } catch (e) {
+        // Optional columns might not exist yet - that's okay
+        console.log('Optional columns not available for duplicate')
     }
 
     revalidatePath('/dashboard')
@@ -278,7 +333,7 @@ export async function updateATSScore(id, score, analysis) {
         throw new Error('Failed to update ATS score')
     }
 
-    revalidatePath(`/cv-builder/edit/${id}`)
+    revalidatePath(`/cv-builder/result/${id}`)
     return data
 }
 

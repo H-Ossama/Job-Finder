@@ -5,7 +5,7 @@
  * Best for: Corporate, Finance, Legal, Management roles
  */
 export default function ProfessionalTemplate({ cvData, themeColor = '#1a365d', fontFamily = 'Georgia' }) {
-    const { personalInfo, summary, experience, education, skills } = cvData || {};
+    const { personalInfo, summary, experience, education, skills, projects, certifications } = cvData || {};
     
     // Use theme color for sidebar
     const sidebarColor = themeColor;
@@ -99,6 +99,22 @@ export default function ProfessionalTemplate({ cvData, themeColor = '#1a365d', f
                             </ul>
                         </div>
                     )}
+
+                    {/* New Certifications with details */}
+                    {certifications?.some(cert => cert.name) && (
+                        <div className="sidebar-section">
+                            <h3>Certifications</h3>
+                            <ul className="cert-list">
+                                {certifications.filter(cert => cert.name).map((cert, i) => (
+                                    <li key={i}>
+                                        <span className="cert-name">{cert.name}</span>
+                                        {cert.issuer && <span className="cert-issuer">{cert.issuer}</span>}
+                                        {cert.date && <span className="cert-date">{cert.date}</span>}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </aside>
 
                 {/* Main Content */}
@@ -150,6 +166,29 @@ export default function ProfessionalTemplate({ cvData, themeColor = '#1a365d', f
                                     <p className="school">{edu.school}</p>
                                     {edu.gpa && <p className="gpa">GPA: {edu.gpa}</p>}
                                     {edu.honors && <p className="honors">{edu.honors}</p>}
+                                </div>
+                            ))}
+                        </section>
+                    )}
+
+                    {/* Projects */}
+                    {projects?.some(proj => proj.name || proj.description) && (
+                        <section className="main-section">
+                            <h2>Projects</h2>
+                            {projects.filter(proj => proj.name || proj.description).map((proj, idx) => (
+                                <div key={idx} className="project-item">
+                                    <div className="proj-top">
+                                        <h3>{proj.name}</h3>
+                                        {proj.date && <span className="date">{proj.date}</span>}
+                                    </div>
+                                    {proj.link && <a href={proj.link} className="proj-link">{proj.link}</a>}
+                                    {proj.description && <p className="desc">{proj.description}</p>}
+                                    {proj.technologies?.length > 0 && (
+                                        <div className="proj-tech">
+                                            <span className="tech-label">Technologies:</span>
+                                            {proj.technologies.join(', ')}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </section>
@@ -349,6 +388,88 @@ export default function ProfessionalTemplate({ cvData, themeColor = '#1a365d', f
                     font-size: 11px;
                     color: #718096;
                     margin: 4px 0 0 0;
+                }
+
+                .cert-list {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    font-size: 11px;
+                }
+
+                .cert-list li {
+                    padding: 6px 0;
+                    border-bottom: 1px dotted rgba(255,255,255,0.15);
+                }
+
+                .cert-list li:last-child {
+                    border-bottom: none;
+                }
+
+                .cert-name {
+                    display: block;
+                    font-weight: 600;
+                }
+
+                .cert-issuer {
+                    display: block;
+                    font-size: 10px;
+                    opacity: 0.8;
+                    margin-top: 2px;
+                }
+
+                .cert-date {
+                    display: block;
+                    font-size: 10px;
+                    opacity: 0.7;
+                    margin-top: 2px;
+                }
+
+                .project-item {
+                    margin-bottom: 20px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+
+                .project-item:last-child {
+                    border-bottom: none;
+                    padding-bottom: 0;
+                }
+
+                .proj-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: baseline;
+                }
+
+                .project-item h3 {
+                    font-size: 14px;
+                    font-weight: 700;
+                    margin: 0;
+                    color: #2d3748;
+                }
+
+                .proj-link {
+                    font-size: 11px;
+                    color: #4a5568;
+                    text-decoration: none;
+                    display: block;
+                    margin: 4px 0;
+                }
+
+                .proj-link:hover {
+                    text-decoration: underline;
+                }
+
+                .proj-tech {
+                    font-size: 11px;
+                    color: #718096;
+                    margin-top: 6px;
+                }
+
+                .tech-label {
+                    font-weight: 600;
+                    margin-right: 4px;
                 }
             `}</style>
         </div>

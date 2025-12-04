@@ -6,7 +6,8 @@ import {
     ZoomOut, 
     Maximize2, 
     Download,
-    Check
+    Check,
+    Move
 } from 'lucide-react';
 import CVPreview from './CVPreview';
 
@@ -30,23 +31,44 @@ export default function LivePreviewPanel({
     paperSize = 'letter',
     resumeSettings = {},
     onPaperSizeChange,
-    showControls = true 
+    showControls = true,
+    sectionOrder = [],
+    fitToScreen = false
 }) {
     const containerRef = useRef(null);
-    const [zoom, setZoom] = useState(70);
+    const paperRef = useRef(null);
+    const [zoom, setZoom] = useState(65);
     const [autoscale, setAutoscale] = useState(true);
     const [containerWidth, setContainerWidth] = useState(0);
+    
+    // Drag state
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [scrollStart, setScrollStart] = useState({ x: 0, y: 0 });
 
-    // Calculate zoom based on container width for autoscale
+    // Calculate zoom based on container size for autoscale
     const calculateAutoZoom = useCallback(() => {
-        if (!containerRef.current) return 70;
+        if (!containerRef.current) return 65;
         const container = containerRef.current;
         const padding = 48; // padding on both sides
         const availableWidth = container.clientWidth - padding;
+        const availableHeight = container.clientHeight - padding;
         const paperWidth = PAPER_SIZES[paperSize].width;
-        const autoZoom = Math.min(100, Math.floor((availableWidth / paperWidth) * 100));
+        const paperHeight = PAPER_SIZES[paperSize].height;
+        
+        // Calculate zoom to fit width
+        const zoomByWidth = Math.floor((availableWidth / paperWidth) * 100);
+        
+        // If fitToScreen is enabled, also consider height and use the smaller zoom
+        if (fitToScreen && availableHeight > 0) {
+            const zoomByHeight = Math.floor((availableHeight / paperHeight) * 100);
+            const autoZoom = Math.min(zoomByWidth, zoomByHeight, 100);
+            return Math.max(30, autoZoom);
+        }
+        
+        const autoZoom = Math.min(100, zoomByWidth);
         return Math.max(30, autoZoom);
-    }, [paperSize]);
+    }, [paperSize, fitToScreen]);
 
     // Update container width on resize
     useEffect(() => {
@@ -83,6 +105,49 @@ export default function LivePreviewPanel({
         setZoom(Math.min(150, Math.max(30, newZoom)));
     };
 
+    // Handle zoom with step (for buttons)
+    const handleZoomStep = (direction) => {
+        const step = 5; // Less sensitive step
+        const newZoom = direction === 'in' ? zoom + step : zoom - step;
+        handleZoomChange(newZoom);
+    };
+
+    // Drag handlers for panning when zoomed
+    const handleMouseDown = (e) => {
+        if (e.button !== 0) return; // Only left click
+        setIsDragging(true);
+        setDragStart({ x: e.clientX, y: e.clientY });
+        setScrollStart({ 
+            x: containerRef.current?.scrollLeft || 0, 
+            y: containerRef.current?.scrollTop || 0 
+        });
+        e.preventDefault();
+    };
+
+    const handleMouseMove = useCallback((e) => {
+        if (!isDragging || !containerRef.current) return;
+        const dx = e.clientX - dragStart.x;
+        const dy = e.clientY - dragStart.y;
+        containerRef.current.scrollLeft = scrollStart.x - dx;
+        containerRef.current.scrollTop = scrollStart.y - dy;
+    }, [isDragging, dragStart, scrollStart]);
+
+    const handleMouseUp = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
+    // Add global mouse event listeners for drag
+    useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, handleMouseMove, handleMouseUp]);
+
     // Get paper dimensions
     const paper = PAPER_SIZES[paperSize];
     const scaledWidth = (paper.width * zoom) / 100;
@@ -96,30 +161,40 @@ export default function LivePreviewPanel({
     return (
         <div className="live-preview-panel">
             {/* Preview Area */}
-            <div className="preview-area" ref={containerRef}>
+            <div 
+                className={`preview-area ${isDragging ? 'dragging' : ''}`} 
+                ref={containerRef}
+                onMouseDown={handleMouseDown}
+            >
                 <div 
-                    className="paper-wrapper"
-                    style={{
-                        width: `${scaledWidth}px`,
-                        height: `${scaledHeight}px`,
-                    }}
+                    className="paper-container"
+                    ref={paperRef}
                 >
                     <div 
-                        className="paper-document"
+                        className="paper-wrapper"
                         style={{
-                            width: `${paper.width}px`,
-                            height: `${paper.height}px`,
-                            transform: `scale(${zoom / 100})`,
-                            transformOrigin: 'top left'
+                            width: `${scaledWidth}px`,
+                            height: `${scaledHeight}px`,
                         }}
                     >
-                        <CVPreview 
-                            cvData={cvData} 
-                            templateId={templateId}
-                            paperSize={paperSize}
-                            resumeSettings={resumeSettings}
-                            scale={1}
-                        />
+                        <div 
+                            className="paper-document"
+                            style={{
+                                width: `${paper.width}px`,
+                                height: `${paper.height}px`,
+                                transform: `scale(${zoom / 100})`,
+                                transformOrigin: 'top left'
+                            }}
+                        >
+                            <CVPreview 
+                                cvData={cvData} 
+                                templateId={templateId}
+                                paperSize={paperSize}
+                                resumeSettings={resumeSettings}
+                                sectionOrder={sectionOrder}
+                                scale={1}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,7 +206,7 @@ export default function LivePreviewPanel({
                         {/* Zoom Controls */}
                         <button 
                             className="control-btn"
-                            onClick={() => handleZoomChange(zoom - 10)}
+                            onClick={() => handleZoomStep('out')}
                             disabled={zoom <= 30}
                             title="Zoom Out"
                         >
@@ -143,6 +218,7 @@ export default function LivePreviewPanel({
                                 type="range"
                                 min="30"
                                 max="150"
+                                step="5"
                                 value={zoom}
                                 onChange={(e) => handleZoomChange(parseInt(e.target.value))}
                                 className="zoom-slider"
@@ -153,7 +229,7 @@ export default function LivePreviewPanel({
                         
                         <button 
                             className="control-btn"
-                            onClick={() => handleZoomChange(zoom + 10)}
+                            onClick={() => handleZoomStep('in')}
                             disabled={zoom >= 150}
                             title="Zoom In"
                         >
@@ -172,18 +248,14 @@ export default function LivePreviewPanel({
                             </span>
                             <span className="autoscale-label">Autoscale</span>
                         </label>
+
+                        {/* Drag hint */}
+                        <div className="drag-hint">
+                            <Move size={14} />
+                            <span>Drag to pan</span>
+                        </div>
                     </div>
 
-                    <div className="controls-right">
-                        {/* Download Button */}
-                        <button 
-                            className="download-btn"
-                            onClick={handleDownload}
-                        >
-                            <Download size={16} />
-                            Download Resume
-                        </button>
-                    </div>
                 </div>
             )}
 
@@ -206,7 +278,19 @@ export default function LivePreviewPanel({
                     display: flex;
                     justify-content: center;
                     align-items: flex-start;
-                    min-height: 500px;
+                    min-height: 0;
+                    cursor: grab;
+                    user-select: none;
+                }
+
+                .preview-area.dragging {
+                    cursor: grabbing;
+                }
+
+                .paper-container {
+                    display: flex;
+                    justify-content: center;
+                    padding: 20px;
                 }
 
                 .paper-wrapper {
@@ -217,6 +301,7 @@ export default function LivePreviewPanel({
                         0 0 0 1px rgba(0, 0, 0, 0.05);
                     overflow: hidden;
                     flex-shrink: 0;
+                    border-radius: 4px;
                 }
 
                 .paper-document {
@@ -227,7 +312,7 @@ export default function LivePreviewPanel({
                 .controls-bar {
                     display: flex;
                     align-items: center;
-                    justify-content: space-between;
+                    justify-content: center;
                     padding: 12px 20px;
                     background: rgba(255, 255, 255, 0.03);
                     border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -236,12 +321,6 @@ export default function LivePreviewPanel({
                 }
 
                 .controls-left {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-
-                .controls-right {
                     display: flex;
                     align-items: center;
                     gap: 12px;
@@ -357,24 +436,14 @@ export default function LivePreviewPanel({
                     color: #9ca3af;
                 }
 
-                .download-btn {
+                .drag-hint {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.15);
-                    color: white;
-                    font-size: 0.85rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-
-                .download-btn:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-color: rgba(255, 255, 255, 0.25);
+                    gap: 6px;
+                    padding-left: 12px;
+                    border-left: 1px solid rgba(255, 255, 255, 0.1);
+                    color: #6b7280;
+                    font-size: 0.75rem;
                 }
 
                 @media (max-width: 768px) {
@@ -386,15 +455,15 @@ export default function LivePreviewPanel({
                     .controls-left {
                         width: 100%;
                         justify-content: center;
-                    }
-
-                    .controls-right {
-                        width: 100%;
-                        justify-content: center;
+                        flex-wrap: wrap;
                     }
 
                     .zoom-slider-container {
                         width: 80px;
+                    }
+
+                    .drag-hint {
+                        display: none;
                     }
                 }
 

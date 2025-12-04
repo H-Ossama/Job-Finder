@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DashboardContent from './DashboardContent';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Dashboard() {
     const supabase = await createClient();
 
@@ -17,7 +19,7 @@ export default async function Dashboard() {
         .from('cvs')
         .select('*')
         .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
     // Fetch user's applications
     const { data: applications } = await supabase
@@ -32,8 +34,10 @@ export default async function Dashboard() {
         .eq('id', user.id)
         .single();
 
+    const cvCount = cvs?.length || 0;
+
     return (
-        <DashboardLayout user={user} profile={profile}>
+        <DashboardLayout user={user} profile={profile} cvCount={cvCount}>
             <DashboardContent 
                 user={user} 
                 cvs={cvs || []} 

@@ -8,7 +8,6 @@
 
 // Original Templates
 export { default as ModernTemplate } from './ModernTemplate';
-export { default as ProfessionalTemplate } from './ProfessionalTemplate';
 export { default as CreativeTemplate } from './CreativeTemplate';
 export { default as MinimalistTemplate } from './MinimalistTemplate';
 export { default as ExecutiveTemplate } from './ExecutiveTemplate';
@@ -19,14 +18,12 @@ export { default as AwesomeTemplate } from './AwesomeTemplate';
 export { default as PikachuTemplate } from './PikachuTemplate';
 export { default as OnyxTemplate } from './OnyxTemplate';
 export { default as AzurillTemplate } from './AzurillTemplate';
-export { default as BronzorTemplate } from './BronzorTemplate';
 
 /**
  * Template mapping for dynamic rendering
  */
 export const TEMPLATE_COMPONENTS = {
     modern: 'ModernTemplate',
-    professional: 'ProfessionalTemplate',
     creative: 'CreativeTemplate',
     minimalist: 'MinimalistTemplate',
     executive: 'ExecutiveTemplate',
@@ -35,8 +32,7 @@ export const TEMPLATE_COMPONENTS = {
     awesome: 'AwesomeTemplate',
     pikachu: 'PikachuTemplate',
     onyx: 'OnyxTemplate',
-    azurill: 'AzurillTemplate',
-    bronzor: 'BronzorTemplate'
+    azurill: 'AzurillTemplate'
 };
 
 /**
@@ -50,14 +46,6 @@ export const TEMPLATE_INFO = {
         bestFor: 'Tech, Startup, Creative roles',
         thumbnail: '/templates/modern-thumb.png',
         hasPhoto: false
-    },
-    professional: {
-        id: 'professional',
-        name: 'Professional',
-        description: 'Classic two-column sidebar layout',
-        bestFor: 'Corporate, Finance, Legal roles',
-        thumbnail: '/templates/professional-thumb.png',
-        hasPhoto: true
     },
     creative: {
         id: 'creative',
@@ -127,14 +115,5 @@ export const TEMPLATE_INFO = {
         thumbnail: '/templates/azurill-thumb.png',
         inspiration: 'Reactive Resume',
         hasPhoto: false
-    },
-    bronzor: {
-        id: 'bronzor',
-        name: 'Bronzor',
-        description: 'Modern two-column with dark sidebar and amber accents',
-        bestFor: 'Creative, Design, Tech roles',
-        thumbnail: '/templates/bronzor-thumb.png',
-        inspiration: 'Reactive Resume',
-        hasPhoto: true
     }
 };

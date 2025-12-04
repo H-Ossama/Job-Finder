@@ -184,15 +184,16 @@ export default function OnyxTemplate({ cvData }) {
                                 </div>
                                 {project.description && <p className="entry-desc">{project.description}</p>}
                                 {project.technologies && (
-                                    <p className="entry-tech">Technologies: {project.technologies}</p>
+                                    <p className="entry-tech">Technologies: {Array.isArray(project.technologies) ? project.technologies.join(', ') : project.technologies}</p>
                                 )}
+                                {(project.url || project.link) && <p className="entry-link">{project.url || project.link}</p>}
                             </div>
                         ))}
                     </section>
                 )}
 
                 {/* Awards & Certifications */}
-                {(awards?.length > 0 || skills?.certifications?.length > 0) && (
+                {(awards?.length > 0 || skills?.certifications?.length > 0 || certifications?.some(c => c.name)) && (
                     <section className="cv-section">
                         <h2 className="section-title">Awards & Certifications</h2>
                         <div className="awards-grid">
@@ -206,6 +207,13 @@ export default function OnyxTemplate({ cvData }) {
                             {skills?.certifications?.map((cert, idx) => (
                                 <div key={`cert-${idx}`} className="award-item">
                                     <h4>{cert}</h4>
+                                </div>
+                            ))}
+                            {certifications?.filter(c => c.name).map((cert, idx) => (
+                                <div key={`detailedCert-${idx}`} className="award-item">
+                                    <h4>{cert.name}</h4>
+                                    {cert.issuer && <p>{cert.issuer}</p>}
+                                    {cert.date && <span>{formatDate(cert.date)}</span>}
                                 </div>
                             ))}
                         </div>
@@ -466,6 +474,12 @@ export default function OnyxTemplate({ cvData }) {
                 .award-item span {
                     font-size: 8pt;
                     color: #9ca3af;
+                }
+
+                .entry-link {
+                    font-size: 8.5pt;
+                    color: #6366f1;
+                    margin: 4px 0 0 0;
                 }
 
                 @media print {

@@ -5,7 +5,7 @@
  * Best for: Software Engineers, Data Scientists, DevOps, IT
  */
 export default function TechTemplate({ cvData }) {
-    const { personalInfo, summary, experience, education, skills, projects } = cvData || {};
+    const { personalInfo, summary, experience, education, skills, projects, certifications: detailedCertifications } = cvData || {};
 
     const formatDate = (date) => {
         if (!date) return '';
@@ -20,8 +20,14 @@ export default function TechTemplate({ cvData }) {
     // Split skills into columns
     const technicalSkills = skills?.technical || [];
     const softSkills = skills?.soft || [];
-    const certifications = skills?.certifications || [];
+    const skillsCertifications = skills?.certifications || [];
     const languages = skills?.languages || [];
+    
+    // Combine certifications from both sources
+    const allCertifications = [
+        ...(detailedCertifications || []).filter(c => c.name).map(c => c.name + (c.issuer ? ` (${c.issuer})` : '')),
+        ...skillsCertifications
+    ];
 
     return (
         <div className="cv-tech">
@@ -124,13 +130,13 @@ export default function TechTemplate({ cvData }) {
                                         <div key={idx} className="project-card">
                                             <div className="project-header">
                                                 <h4>{proj.name}</h4>
-                                                {proj.url && <a href={proj.url} className="project-link">↗</a>}
+                                                {(proj.url || proj.link) && <a href={proj.url || proj.link} className="project-link">↗</a>}
                                             </div>
                                             {proj.description && <p>{proj.description}</p>}
                                             {proj.technologies && (
                                                 <div className="project-tech">
-                                                    {proj.technologies.split(',').map((tech, i) => (
-                                                        <span key={i}>{tech.trim()}</span>
+                                                    {(Array.isArray(proj.technologies) ? proj.technologies : proj.technologies.split(',')).map((tech, i) => (
+                                                        <span key={i}>{typeof tech === 'string' ? tech.trim() : tech}</span>
                                                     ))}
                                                 </div>
                                             )}
@@ -170,11 +176,11 @@ export default function TechTemplate({ cvData }) {
                         )}
 
                         {/* Certifications */}
-                        {certifications.length > 0 && (
+                        {allCertifications.length > 0 && (
                             <section className="section">
                                 <h2><span className="hash">//</span> Certifications</h2>
                                 <div className="certs-list">
-                                    {certifications.map((cert, i) => (
+                                    {allCertifications.map((cert, i) => (
                                         <div key={i} className="cert">
                                             <span className="cert-icon">✓</span> {cert}
                                         </div>

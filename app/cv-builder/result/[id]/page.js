@@ -1,14 +1,15 @@
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import CVBuilderContent from './CVBuilderContent';
+import CVResultContent from './CVResultContent';
 
 export const metadata = {
-    title: 'AI CV Builder — CareerForge AI',
-    description: 'Build your professional CV with AI assistance',
+    title: 'CV Analysis Results — CareerForge AI',
+    description: 'Your CV analysis results with ATS score and improvement suggestions',
 };
 
-export default async function CVBuilderPage({ searchParams }) {
+export default async function CVResultPage({ params }) {
+    const { id } = await params;
     const supabase = await createClient();
     
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -24,22 +25,16 @@ export default async function CVBuilderPage({ searchParams }) {
         .eq('id', user.id)
         .single();
 
-    // Check if we're editing an existing CV
-    const params = await searchParams;
-    const editId = params?.edit;
-    let existingCV = null;
+    // Fetch the CV
+    const { data: cv, error: cvError } = await supabase
+        .from('cvs')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
 
-    if (editId) {
-        const { data: cv, error: cvError } = await supabase
-            .from('cvs')
-            .select('*')
-            .eq('id', editId)
-            .eq('user_id', user.id)
-            .single();
-        
-        if (!cvError && cv) {
-            existingCV = cv;
-        }
+    if (cvError || !cv) {
+        redirect('/cv-builder');
     }
 
     // Get CV count for sidebar
@@ -50,7 +45,7 @@ export default async function CVBuilderPage({ searchParams }) {
 
     return (
         <DashboardLayout user={user} profile={profile} cvCount={cvCount || 0}>
-            <CVBuilderContent user={user} profile={profile} existingCV={existingCV} />
+            <CVResultContent cv={cv} user={user} />
         </DashboardLayout>
     );
 }

@@ -24,7 +24,7 @@ export default function Pricing({ onOpenSignup }) {
 
     const handleGetStarted = () => {
         if (user) {
-            router.push('/cv-builder/create');
+            router.push('/cv-builder');
         } else {
             onOpenSignup();
         }

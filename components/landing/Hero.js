@@ -52,7 +52,7 @@ export default function Hero({ onOpenSignup }) {
 
     const handleCTAClick = () => {
         if (user) {
-            router.push('/cv-builder/create');
+            router.push('/cv-builder');
         } else {
             onOpenSignup();
         }
