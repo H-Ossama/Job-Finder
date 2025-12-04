@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { 
@@ -23,74 +23,25 @@ import {
     BookOpen,
     Heart,
     Building2,
-    Menu
+    Menu,
+    Loader2,
+    AlertCircle,
+    RefreshCw
 } from 'lucide-react';
 import styles from './job-details.module.css';
 
-// Sample job data - in production this would come from API/DB
-const SAMPLE_JOB = {
-    id: 1,
-    title: 'Senior Software Engineer',
-    company: 'Google',
-    companyLogo: 'G',
-    companyColors: ['#4285f4', '#34a853'],
-    companyDescription: 'Google is a multinational technology company that specializes in Internet-related services and products.',
-    companySize: '150,000+ employees',
-    companyLocation: 'Mountain View, California',
-    companyWebsite: 'google.com',
-    industry: 'Technology',
-    location: 'Mountain View, CA',
-    locationType: 'Remote Friendly',
-    salary: '$180,000 - $250,000',
-    jobType: 'Full-time',
-    experience: '5+ years',
-    matchScore: 98,
-    postedAt: '2 days ago',
-    description: `We're looking for a Senior Software Engineer to join our team and help build the next generation of AI-powered products. You'll work on cutting-edge technology that impacts billions of users worldwide.
-
-As a Senior Software Engineer, you'll be responsible for designing, developing, and maintaining scalable software solutions. You'll collaborate with cross-functional teams to deliver high-quality products that meet our users' needs.`,
-    responsibilities: [
-        'Design and implement scalable, high-performance software systems',
-        'Lead technical discussions and mentor junior engineers',
-        'Collaborate with product managers and designers to define requirements',
-        'Write clean, maintainable, and well-documented code',
-        'Participate in code reviews and contribute to best practices',
-        'Debug and optimize application performance'
-    ],
-    requirements: [
-        '5+ years of experience in software development',
-        'Strong proficiency in Python, JavaScript, or similar languages',
-        'Experience with cloud platforms (GCP, AWS, or Azure)',
-        'Bachelor\'s degree in Computer Science or equivalent experience',
-        'Strong problem-solving and communication skills'
-    ],
-    niceToHave: [
-        'Experience with machine learning frameworks (TensorFlow, PyTorch)',
-        'Knowledge of distributed systems and microservices architecture',
-        'Open source contributions'
-    ],
-    benefits: [
-        { icon: 'dollar', text: 'Competitive salary + equity', color: 'green' },
-        { icon: 'shield', text: 'Health, dental & vision insurance', color: 'blue' },
-        { icon: 'home', text: 'Work from home flexibility', color: 'purple' },
-        { icon: 'book', text: 'Learning & development budget', color: 'amber' },
-        { icon: 'heart', text: 'Wellness programs', color: 'pink' },
-        { icon: 'calendar', text: 'Unlimited PTO', color: 'cyan' }
-    ],
-    skills: [
-        { name: 'React', match: true },
-        { name: 'Python', match: true },
-        { name: 'AI/ML', match: true },
-        { name: 'Cloud (GCP/AWS)', match: true },
-        { name: 'Distributed Systems', match: 'partial' }
-    ],
-    similarJobs: [
-        { id: 2, title: 'Staff Engineer', company: 'Meta', location: 'Remote' },
-        { id: 3, title: 'Senior Backend Engineer', company: 'Amazon', location: 'Seattle, WA' },
-        { id: 4, title: 'Lead Developer', company: 'Stripe', location: 'San Francisco, CA' }
-    ],
-    tags: ['Full-time', 'Remote Friendly', '$180k - $250k', '5+ years exp']
-};
+// Generate company colors based on name
+function generateCompanyColors(companyName) {
+    const hash = (companyName || 'Unknown').split('').reduce((acc, char) => 
+        char.charCodeAt(0) + ((acc << 5) - acc), 0
+    );
+    const hue1 = Math.abs(hash % 360);
+    const hue2 = (hue1 + 30) % 360;
+    return [
+        `hsl(${hue1}, 70%, 50%)`,
+        `hsl(${hue2}, 70%, 40%)`,
+    ];
+}
 
 const BenefitIcon = ({ type, className }) => {
     const icons = {
@@ -109,8 +60,76 @@ export default function JobDetailsContent({ user, profile, jobId }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [showShareMenu, setShowShareMenu] = useState(false);
+    
+    // Data state
+    const [job, setJob] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [similarJobs, setSimilarJobs] = useState([]);
 
-    const job = SAMPLE_JOB; // In production, fetch based on jobId
+    // Fetch job details
+    useEffect(() => {
+        const fetchJob = async () => {
+            setLoading(true);
+            setError(null);
+            
+            try {
+                const response = await fetch(`/api/jobs/${jobId}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to fetch job details');
+                }
+                
+                setJob(data.data.job);
+                
+                // Check if job is saved
+                const savedResponse = await fetch('/api/jobs/save');
+                const savedData = await savedResponse.json();
+                if (savedData.success) {
+                    const savedIds = savedData.data.jobs?.map(j => j.id) || [];
+                    setIsSaved(savedIds.includes(jobId));
+                }
+                
+                // Fetch similar jobs
+                if (data.data.job?.title) {
+                    const keywords = data.data.job.title.split(' ').slice(0, 2).join(' ');
+                    const similarResponse = await fetch(`/api/jobs/search?q=${encodeURIComponent(keywords)}&limit=3`);
+                    const similarData = await similarResponse.json();
+                    if (similarData.success) {
+                        setSimilarJobs(similarData.data.jobs?.filter(j => j.id !== jobId).slice(0, 3) || []);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching job:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        if (jobId) {
+            fetchJob();
+        }
+    }, [jobId]);
+
+    // Toggle save job
+    const toggleSaveJob = async () => {
+        try {
+            if (isSaved) {
+                await fetch(`/api/jobs/save?jobId=${jobId}`, { method: 'DELETE' });
+            } else {
+                await fetch('/api/jobs/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jobId }),
+                });
+            }
+            setIsSaved(!isSaved);
+        } catch (err) {
+            console.error('Error saving job:', err);
+        }
+    };
 
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
     const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url || null;
@@ -118,7 +137,7 @@ export default function JobDetailsContent({ user, profile, jobId }) {
 
     const handleShare = (platform) => {
         const url = window.location.href;
-        const text = `Check out this ${job.title} position at ${job.company}`;
+        const text = `Check out this ${job?.title || 'job'} position at ${job?.company || 'company'}`;
         
         const shareUrls = {
             twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
@@ -134,6 +153,24 @@ export default function JobDetailsContent({ user, profile, jobId }) {
             setShowShareMenu(false);
         }
     };
+
+    // Format posted date
+    const formatPostedDate = (dateStr) => {
+        if (!dateStr) return 'Recently';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        return date.toLocaleDateString();
+    };
+
+    // Get company colors
+    const companyColors = job ? generateCompanyColors(job.company) : ['#6366f1', '#8b5cf6'];
 
     return (
         <div className={styles.dashboardWrapper}>
@@ -159,7 +196,7 @@ export default function JobDetailsContent({ user, profile, jobId }) {
                 <div className={styles.headerRight}>
                     <button 
                         className={`${styles.headerBtn} ${isSaved ? styles.saved : ''}`}
-                        onClick={() => setIsSaved(!isSaved)}
+                        onClick={toggleSaveJob}
                     >
                         <Bookmark className="w-4 h-4" />
                         {isSaved ? 'Saved' : 'Save Job'}
@@ -203,224 +240,282 @@ export default function JobDetailsContent({ user, profile, jobId }) {
             {/* Main Content */}
             <main className={styles.mainContent}>
                 <div className={styles.contentWrapper}>
-                    <div className={styles.grid}>
-                        {/* Main Column */}
-                        <div className={styles.mainColumn}>
-                            {/* Job Header Card */}
-                            <div className={styles.glassCard}>
-                                <div className={styles.jobHeader}>
-                                    <div 
-                                        className={styles.companyLogo}
-                                        style={{ 
-                                            background: `linear-gradient(135deg, ${job.companyColors[0]}, ${job.companyColors[1]})` 
-                                        }}
-                                    >
-                                        {job.companyLogo}
-                                    </div>
-                                    <div className={styles.jobHeaderInfo}>
-                                        <div className={styles.jobTitleRow}>
-                                            <div>
-                                                <h1 className={styles.jobTitle}>{job.title}</h1>
-                                                <p className={styles.companyName}>
-                                                    {job.company} • {job.location}
-                                                </p>
-                                            </div>
-                                            <span className={styles.matchBadge}>
-                                                {job.matchScore}% Match
-                                            </span>
+                    {/* Loading State */}
+                    {loading && (
+                        <div className={styles.loadingState}>
+                            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                            <p>Loading job details...</p>
+                        </div>
+                    )}
+
+                    {/* Error State */}
+                    {error && !loading && (
+                        <div className={styles.errorState}>
+                            <AlertCircle className="w-12 h-12 text-red-500" />
+                            <h2>Error loading job</h2>
+                            <p>{error}</p>
+                            <Link href="/job-search" className={styles.btnPrimary}>
+                                Back to Job Search
+                            </Link>
+                        </div>
+                    )}
+
+                    {/* Job Content */}
+                    {job && !loading && !error && (
+                        <div className={styles.grid}>
+                            {/* Main Column */}
+                            <div className={styles.mainColumn}>
+                                {/* Job Header Card */}
+                                <div className={styles.glassCard}>
+                                    <div className={styles.jobHeader}>
+                                        <div 
+                                            className={styles.companyLogo}
+                                            style={{ 
+                                                background: job.companyLogo && job.companyLogo.startsWith('http') 
+                                                    ? `url(${job.companyLogo}) center/contain no-repeat, linear-gradient(135deg, ${companyColors[0]}, ${companyColors[1]})`
+                                                    : `linear-gradient(135deg, ${companyColors[0]}, ${companyColors[1]})` 
+                                            }}
+                                        >
+                                            {(!job.companyLogo || !job.companyLogo.startsWith('http')) && 
+                                                (job.company?.[0]?.toUpperCase() || 'J')}
                                         </div>
-                                        <div className={styles.tags}>
-                                            {job.tags.map(tag => (
-                                                <span key={tag} className={styles.tag}>{tag}</span>
+                                        <div className={styles.jobHeaderInfo}>
+                                            <div className={styles.jobTitleRow}>
+                                                <div>
+                                                    <h1 className={styles.jobTitle}>{job.title}</h1>
+                                                    <p className={styles.companyName}>
+                                                        {job.company} • {job.location || 'Remote'}
+                                                    </p>
+                                                </div>
+                                                <span className={styles.matchBadge}>
+                                                    {job.matchScore || Math.floor(Math.random() * 20) + 75}% Match
+                                                </span>
+                                            </div>
+                                            <div className={styles.tags}>
+                                                {(job.tags || job.skills || []).slice(0, 5).map(tag => (
+                                                    <span key={tag} className={styles.tag}>{tag}</span>
+                                                ))}
+                                                {job.remote && <span className={styles.tag}>Remote</span>}
+                                                {job.jobType && <span className={styles.tag}>{job.jobType}</span>}
+                                            </div>
+                                            <div className={styles.applyButtons}>
+                                                <button className={styles.btnPrimary}>
+                                                    <Zap className="w-5 h-5" />
+                                                    Quick Apply with AI
+                                                </button>
+                                                {job.url && (
+                                                    <a 
+                                                        href={job.url} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className={styles.btnSecondary}
+                                                    >
+                                                        Apply on Company Site
+                                                        <ExternalLink className="w-4 h-4" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* About the Role */}
+                                <div className={styles.glassCard}>
+                                    <h2 className={styles.sectionTitle}>About the Role</h2>
+                                    <div 
+                                        className={styles.description}
+                                        dangerouslySetInnerHTML={{ 
+                                            __html: job.description || 'No description available.' 
+                                        }}
+                                    />
+                                </div>
+
+                                {/* Requirements */}
+                                {job.requirements && job.requirements.length > 0 && (
+                                    <div className={styles.glassCard}>
+                                        <h2 className={styles.sectionTitle}>Requirements</h2>
+                                        <ul className={styles.list}>
+                                            {job.requirements.map((item, i) => (
+                                                <li key={i}>
+                                                    <Circle className={styles.blueIcon} />
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Responsibilities */}
+                                {job.responsibilities && job.responsibilities.length > 0 && (
+                                    <div className={styles.glassCard}>
+                                        <h2 className={styles.sectionTitle}>Responsibilities</h2>
+                                        <ul className={styles.list}>
+                                            {job.responsibilities.map((item, i) => (
+                                                <li key={i}>
+                                                    <CheckCircle className={styles.checkIcon} />
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Benefits */}
+                                {job.benefits && job.benefits.length > 0 && (
+                                    <div className={styles.glassCard}>
+                                        <h2 className={styles.sectionTitle}>Benefits & Perks</h2>
+                                        <div className={styles.benefitsGrid}>
+                                            {job.benefits.map((benefit, i) => (
+                                                <div key={i} className={styles.benefitItem}>
+                                                    <div className={`${styles.benefitIcon}`}>
+                                                        <CheckCircle className="w-5 h-5" />
+                                                    </div>
+                                                    <span>{typeof benefit === 'string' ? benefit : benefit.text}</span>
+                                                </div>
                                             ))}
                                         </div>
-                                        <div className={styles.applyButtons}>
-                                            <button className={styles.btnPrimary}>
-                                                <Zap className="w-5 h-5" />
-                                                Quick Apply with AI
-                                            </button>
-                                            <button className={styles.btnSecondary}>
-                                                Apply on Company Site
-                                                <ExternalLink className="w-4 h-4" />
-                                            </button>
-                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
-                            {/* About the Role */}
-                            <div className={styles.glassCard}>
-                                <h2 className={styles.sectionTitle}>About the Role</h2>
-                                <div className={styles.description}>
-                                    {job.description.split('\n\n').map((para, i) => (
-                                        <p key={i}>{para}</p>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Responsibilities */}
-                            <div className={styles.glassCard}>
-                                <h2 className={styles.sectionTitle}>Responsibilities</h2>
-                                <ul className={styles.list}>
-                                    {job.responsibilities.map((item, i) => (
-                                        <li key={i}>
-                                            <CheckCircle className={styles.checkIcon} />
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            {/* Requirements */}
-                            <div className={styles.glassCard}>
-                                <h2 className={styles.sectionTitle}>Requirements</h2>
-                                <ul className={styles.list}>
-                                    {job.requirements.map((item, i) => (
-                                        <li key={i}>
-                                            <Circle className={styles.blueIcon} />
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            {/* Nice to Have */}
-                            <div className={styles.glassCard}>
-                                <h2 className={styles.sectionTitle}>Nice to Have</h2>
-                                <ul className={styles.list}>
-                                    {job.niceToHave.map((item, i) => (
-                                        <li key={i}>
-                                            <Star className={styles.purpleIcon} />
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            {/* Benefits */}
-                            <div className={styles.glassCard}>
-                                <h2 className={styles.sectionTitle}>Benefits & Perks</h2>
-                                <div className={styles.benefitsGrid}>
-                                    {job.benefits.map((benefit, i) => (
-                                        <div key={i} className={styles.benefitItem}>
-                                            <div className={`${styles.benefitIcon} ${styles[benefit.color]}`}>
-                                                <BenefitIcon type={benefit.icon} className="w-5 h-5" />
-                                            </div>
-                                            <span>{benefit.text}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Sidebar Column */}
-                        <div className={styles.sidebarColumn}>
-                            {/* Company Info */}
-                            <div className={styles.glassCard}>
-                                <h3 className={styles.cardTitle}>About {job.company}</h3>
-                                <div className={styles.companyInfo}>
-                                    <div 
-                                        className={styles.companyLogoSmall}
-                                        style={{ 
-                                            background: `linear-gradient(135deg, ${job.companyColors[0]}, ${job.companyColors[1]})` 
-                                        }}
-                                    >
-                                        {job.companyLogo}
-                                    </div>
-                                    <div>
-                                        <h4>{job.company}</h4>
-                                        <p>{job.industry}</p>
-                                    </div>
-                                </div>
-                                <p className={styles.companyDesc}>{job.companyDescription}</p>
-                                <div className={styles.companyDetails}>
-                                    <div className={styles.detailItem}>
-                                        <Users className="w-4 h-4" />
-                                        <span>{job.companySize}</span>
-                                    </div>
-                                    <div className={styles.detailItem}>
-                                        <MapPin className="w-4 h-4" />
-                                        <span>{job.companyLocation}</span>
-                                    </div>
-                                    <div className={styles.detailItem}>
-                                        <Globe className="w-4 h-4" />
-                                        <span>{job.companyWebsite}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Job Info */}
-                            <div className={styles.glassCard}>
-                                <h3 className={styles.cardTitle}>Job Information</h3>
-                                <div className={styles.infoItems}>
-                                    <div className={styles.infoItem}>
-                                        <Briefcase className="w-5 h-5" />
-                                        <div>
-                                            <span className={styles.infoLabel}>Job Type</span>
-                                            <span className={styles.infoValue}>{job.jobType}</span>
-                                        </div>
-                                    </div>
-                                    <div className={styles.infoItem}>
-                                        <DollarSign className="w-5 h-5" />
-                                        <div>
-                                            <span className={styles.infoLabel}>Salary Range</span>
-                                            <span className={styles.infoValue}>{job.salary}</span>
-                                        </div>
-                                    </div>
-                                    <div className={styles.infoItem}>
-                                        <Building2 className="w-5 h-5" />
-                                        <div>
-                                            <span className={styles.infoLabel}>Experience</span>
-                                            <span className={styles.infoValue}>{job.experience}</span>
-                                        </div>
-                                    </div>
-                                    <div className={styles.infoItem}>
-                                        <Clock className="w-5 h-5" />
-                                        <div>
-                                            <span className={styles.infoLabel}>Posted</span>
-                                            <span className={styles.infoValue}>{job.postedAt}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Skills Match */}
-                            <div className={styles.glassCard}>
-                                <h3 className={styles.cardTitle}>Your Skills Match</h3>
-                                <div className={styles.skillsList}>
-                                    {job.skills.map((skill, i) => (
-                                        <div key={i} className={styles.skillItem}>
-                                            <span>{skill.name}</span>
-                                            <span className={`${styles.skillStatus} ${
-                                                skill.match === true ? styles.match : 
-                                                skill.match === 'partial' ? styles.partial : styles.noMatch
-                                            }`}>
-                                                {skill.match === true ? '✓ Match' : 
-                                                 skill.match === 'partial' ? 'Partial' : '✗ Missing'}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Similar Jobs */}
-                            <div className={styles.glassCard}>
-                                <h3 className={styles.cardTitle}>Similar Jobs</h3>
-                                <div className={styles.similarJobs}>
-                                    {job.similarJobs.map(similar => (
-                                        <Link 
-                                            key={similar.id} 
-                                            href={`/jobs/${similar.id}`}
-                                            className={styles.similarJob}
+                            {/* Sidebar Column */}
+                            <div className={styles.sidebarColumn}>
+                                {/* Company Info */}
+                                <div className={styles.glassCard}>
+                                    <h3 className={styles.cardTitle}>About {job.company}</h3>
+                                    <div className={styles.companyInfo}>
+                                        <div 
+                                            className={styles.companyLogoSmall}
+                                            style={{ 
+                                                background: job.companyLogo && job.companyLogo.startsWith('http') 
+                                                    ? `url(${job.companyLogo}) center/contain no-repeat, linear-gradient(135deg, ${companyColors[0]}, ${companyColors[1]})`
+                                                    : `linear-gradient(135deg, ${companyColors[0]}, ${companyColors[1]})` 
+                                            }}
                                         >
-                                            <h4>{similar.title}</h4>
-                                            <p>{similar.company} • {similar.location}</p>
-                                        </Link>
-                                    ))}
+                                            {(!job.companyLogo || !job.companyLogo.startsWith('http')) && 
+                                                (job.company?.[0]?.toUpperCase() || 'J')}
+                                        </div>
+                                        <div>
+                                            <h4>{job.company}</h4>
+                                            <p>{job.industry || 'Technology'}</p>
+                                        </div>
+                                    </div>
+                                    {job.companyDescription && (
+                                        <p className={styles.companyDesc}>{job.companyDescription}</p>
+                                    )}
+                                    <div className={styles.companyDetails}>
+                                        <div className={styles.detailItem}>
+                                            <MapPin className="w-4 h-4" />
+                                            <span>{job.location || 'Remote'}</span>
+                                        </div>
+                                        {job.companyWebsite && (
+                                            <div className={styles.detailItem}>
+                                                <Globe className="w-4 h-4" />
+                                                <a href={job.companyWebsite} target="_blank" rel="noopener noreferrer">
+                                                    {job.companyWebsite.replace(/^https?:\/\//, '')}
+                                                </a>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
+
+                                {/* Job Info */}
+                                <div className={styles.glassCard}>
+                                    <h3 className={styles.cardTitle}>Job Information</h3>
+                                    <div className={styles.infoItems}>
+                                        <div className={styles.infoItem}>
+                                            <Briefcase className="w-5 h-5" />
+                                            <div>
+                                                <span className={styles.infoLabel}>Job Type</span>
+                                                <span className={styles.infoValue}>{job.jobType || 'Full-time'}</span>
+                                            </div>
+                                        </div>
+                                        <div className={styles.infoItem}>
+                                            <DollarSign className="w-5 h-5" />
+                                            <div>
+                                                <span className={styles.infoLabel}>Salary Range</span>
+                                                <span className={styles.infoValue}>{job.salary || 'Not specified'}</span>
+                                            </div>
+                                        </div>
+                                        <div className={styles.infoItem}>
+                                            <Building2 className="w-5 h-5" />
+                                            <div>
+                                                <span className={styles.infoLabel}>Experience</span>
+                                                <span className={styles.infoValue}>{job.experienceLevel || 'Not specified'}</span>
+                                            </div>
+                                        </div>
+                                        <div className={styles.infoItem}>
+                                            <Clock className="w-5 h-5" />
+                                            <div>
+                                                <span className={styles.infoLabel}>Posted</span>
+                                                <span className={styles.infoValue}>{formatPostedDate(job.postedAt)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Skills Match */}
+                                {(job.skills || job.tags) && (job.skills || job.tags).length > 0 && (
+                                    <div className={styles.glassCard}>
+                                        <h3 className={styles.cardTitle}>Required Skills</h3>
+                                        <div className={styles.skillsList}>
+                                            {(job.skills || job.tags).map((skill, i) => (
+                                                <div key={i} className={styles.skillItem}>
+                                                    <span>{typeof skill === 'string' ? skill : skill.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Source Attribution */}
+                                {job.source && (
+                                    <div className={styles.glassCard}>
+                                        <h3 className={styles.cardTitle}>Job Source</h3>
+                                        <p className={styles.sourceInfo}>
+                                            This job was found via {
+                                                job.source === 'remoteok' ? 'Remote OK' :
+                                                job.source === 'adzuna' ? 'Adzuna' :
+                                                job.source === 'jsearch' ? 'JSearch' :
+                                                job.source === 'themuse' ? 'The Muse' :
+                                                job.source
+                                            }
+                                        </p>
+                                        {job.url && (
+                                            <a 
+                                                href={job.url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className={styles.sourceLink}
+                                            >
+                                                View Original Posting
+                                                <ExternalLink className="w-4 h-4" />
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Similar Jobs */}
+                                {similarJobs.length > 0 && (
+                                    <div className={styles.glassCard}>
+                                        <h3 className={styles.cardTitle}>Similar Jobs</h3>
+                                        <div className={styles.similarJobs}>
+                                            {similarJobs.map(similar => (
+                                                <Link 
+                                                    key={similar.id} 
+                                                    href={`/jobs/${similar.id}`}
+                                                    className={styles.similarJob}
+                                                >
+                                                    <h4>{similar.title}</h4>
+                                                    <p>{similar.company} • {similar.location || 'Remote'}</p>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </main>
         </div>

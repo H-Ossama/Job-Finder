@@ -1,195 +1,268 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { 
     Search, 
     MapPin, 
-    Filter, 
     ChevronDown, 
     ChevronLeft, 
     ChevronRight,
     Briefcase,
-    DollarSign,
     Clock,
-    Building2,
     Globe,
     Star,
     Bookmark,
     X,
     Sliders,
     TrendingUp,
-    Zap
+    Loader2,
+    AlertCircle,
+    RefreshCw
 } from 'lucide-react';
 import styles from './job-search.module.css';
 
-// Job platforms/sources
+// Job platforms/sources - reflects actual available sources
 const JOB_PLATFORMS = [
-    { id: 'all', name: 'All Platforms', icon: Globe },
-    { id: 'linkedin', name: 'LinkedIn', color: '#0A66C2' },
-    { id: 'indeed', name: 'Indeed', color: '#2164f3' },
-    { id: 'glassdoor', name: 'Glassdoor', color: '#0CAA41' },
-    { id: 'monster', name: 'Monster', color: '#6e45a5' },
-    { id: 'ziprecruiter', name: 'ZipRecruiter', color: '#5ba3e0' },
-    { id: 'wellfound', name: 'Wellfound', color: '#000' },
+    { id: 'all', name: 'All Sources', icon: Globe },
     { id: 'remoteok', name: 'Remote OK', color: '#ff5858' },
-    { id: 'weworkremotely', name: 'WeWorkRemotely', color: '#00a1e0' },
-    { id: 'dice', name: 'Dice', color: '#eb1c2d' },
-    { id: 'stackoverflow', name: 'Stack Overflow', color: '#f48024' },
+    { id: 'adzuna', name: 'Adzuna', color: '#2164f3' },
+    { id: 'jsearch', name: 'JSearch', color: '#10a37f' },
+    { id: 'themuse', name: 'The Muse', color: '#6e45a5' },
 ];
 
 // Quick filters
 const QUICK_FILTERS = [
     'All Jobs', 'Remote', 'Full-time', 'Part-time', 'Contract', 
-    '$100k+', '$150k+', 'Entry Level', 'Senior', 'Startup'
-];
-
-// Sample job data
-const SAMPLE_JOBS = [
-    {
-        id: 1,
-        title: 'Senior Software Engineer',
-        company: 'Google',
-        companyLogo: 'G',
-        companyColors: ['#4285f4', '#34a853'],
-        location: 'Mountain View, CA',
-        salary: '$180k - $250k',
-        matchScore: 98,
-        tags: ['React', 'Python', 'AI/ML', 'Remote'],
-        description: 'Join our team to build cutting-edge AI products that impact billions of users worldwide. Work with the best engineers...',
-        postedAt: '2 days ago',
-        platform: 'linkedin',
-        featured: true
-    },
-    {
-        id: 2,
-        title: 'Full Stack Developer',
-        company: 'Amazon',
-        companyLogo: 'A',
-        companyColors: ['#ff9900', '#ff5722'],
-        location: 'Remote',
-        salary: '$150k - $200k',
-        matchScore: 95,
-        tags: ['TypeScript', 'AWS', 'Node.js', 'Full-time'],
-        description: 'Work on AWS services used by millions of developers. Build scalable solutions for cloud infrastructure...',
-        postedAt: '1 day ago',
-        platform: 'indeed'
-    },
-    {
-        id: 3,
-        title: 'Backend Engineer',
-        company: 'Stripe',
-        companyLogo: 'S',
-        companyColors: ['#635bff', '#00d4ff'],
-        location: 'San Francisco, CA',
-        salary: '$160k - $220k',
-        matchScore: 87,
-        tags: ['Ruby', 'Go', 'PostgreSQL'],
-        description: 'Help build the financial infrastructure for the internet. Work on payments APIs used by millions of businesses...',
-        postedAt: '3 days ago',
-        platform: 'glassdoor'
-    },
-    {
-        id: 4,
-        title: 'Frontend Engineer',
-        company: 'Netflix',
-        companyLogo: 'N',
-        companyColors: ['#e50914', '#b20710'],
-        location: 'Los Gatos, CA',
-        salary: '$170k - $230k',
-        matchScore: 92,
-        tags: ['React', 'JavaScript', 'CSS'],
-        description: 'Build the next generation of streaming experiences. Work on UI that millions of users interact with daily...',
-        postedAt: '5 days ago',
-        platform: 'wellfound'
-    },
-    {
-        id: 5,
-        title: 'Product Engineer',
-        company: 'Meta',
-        companyLogo: 'M',
-        companyColors: ['#0668E1', '#1877f2'],
-        location: 'Menlo Park, CA',
-        salary: '$180k - $260k',
-        matchScore: 85,
-        tags: ['C++', 'Unity', 'VR/AR'],
-        description: 'Join the team building the metaverse. Work on cutting-edge VR/AR technologies...',
-        postedAt: '1 week ago',
-        platform: 'linkedin'
-    },
-    {
-        id: 6,
-        title: 'DevOps Engineer',
-        company: 'X (Twitter)',
-        companyLogo: 'X',
-        companyColors: ['#000', '#333'],
-        location: 'Remote',
-        salary: '$140k - $190k',
-        matchScore: 78,
-        tags: ['Kubernetes', 'Terraform', 'AWS'],
-        description: 'Scale infrastructure to handle billions of tweets. Build reliable systems for real-time communication...',
-        postedAt: '1 week ago',
-        platform: 'remoteok'
-    },
-    {
-        id: 7,
-        title: 'Machine Learning Engineer',
-        company: 'OpenAI',
-        companyLogo: 'O',
-        companyColors: ['#10a37f', '#1a1a2e'],
-        location: 'San Francisco, CA',
-        salary: '$200k - $350k',
-        matchScore: 94,
-        tags: ['Python', 'PyTorch', 'LLMs', 'Research'],
-        description: 'Work on the next generation of AI systems. Help make AI safe and beneficial for humanity...',
-        postedAt: '4 days ago',
-        platform: 'linkedin',
-        featured: true
-    },
-    {
-        id: 8,
-        title: 'iOS Developer',
-        company: 'Apple',
-        companyLogo: '',
-        companyColors: ['#555', '#000'],
-        location: 'Cupertino, CA',
-        salary: '$175k - $240k',
-        matchScore: 81,
-        tags: ['Swift', 'SwiftUI', 'iOS', 'Objective-C'],
-        description: 'Design and build the next generation of iOS apps. Create experiences that delight millions of users...',
-        postedAt: '6 days ago',
-        platform: 'dice'
-    }
+    '$100k+', '$150k+', 'Entry Level', 'Senior'
 ];
 
 // Advanced filter options
 const ADVANCED_FILTERS = {
-    jobType: ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'],
-    experienceLevel: ['Entry Level', 'Junior', 'Mid-Level', 'Senior', 'Lead', 'Executive'],
-    salaryRange: ['$0 - $50k', '$50k - $100k', '$100k - $150k', '$150k - $200k', '$200k - $300k', '$300k+'],
-    datePosted: ['Last 24 hours', 'Last 3 days', 'Last week', 'Last 2 weeks', 'Last month', 'Any time'],
-    companySize: ['Startup (1-50)', 'Small (51-200)', 'Medium (201-1000)', 'Large (1001-5000)', 'Enterprise (5000+)'],
-    industry: ['Technology', 'Finance', 'Healthcare', 'E-commerce', 'Education', 'Media', 'Gaming', 'AI/ML', 'Crypto/Web3'],
-    benefits: ['Health Insurance', 'Remote Work', 'Unlimited PTO', '401k Match', 'Stock Options', 'Learning Budget', 'Gym Membership', 'Parental Leave']
+    jobType: ['Full-time', 'Part-time', 'Contract', 'Internship'],
+    experienceLevel: ['Entry Level', 'Mid-Level', 'Senior', 'Lead'],
+    datePosted: ['Last 24 hours', 'Last 3 days', 'Last week', 'Last month', 'Any time'],
 };
 
+// Generate company colors based on name
+function generateCompanyColors(companyName) {
+    const hash = (companyName || 'Unknown').split('').reduce((acc, char) => 
+        char.charCodeAt(0) + ((acc << 5) - acc), 0
+    );
+    const hue1 = Math.abs(hash % 360);
+    const hue2 = (hue1 + 30) % 360;
+    return [
+        `hsl(${hue1}, 70%, 50%)`,
+        `hsl(${hue2}, 70%, 40%)`,
+    ];
+}
+
+// Format posted date
+function formatPostedDate(dateStr) {
+    if (!dateStr) return 'Recently';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 14) return '1 week ago';
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+}
+
 export default function JobSearchContent({ user, profile }) {
+    // Search state
     const [searchQuery, setSearchQuery] = useState('');
     const [locationQuery, setLocationQuery] = useState('');
     const [activeFilters, setActiveFilters] = useState(['All Jobs']);
     const [selectedPlatforms, setSelectedPlatforms] = useState(['all']);
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [sortBy, setSortBy] = useState('relevant');
-    const [savedJobs, setSavedJobs] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [advancedFilters, setAdvancedFilters] = useState({
         jobType: [],
         experienceLevel: [],
-        salaryRange: [],
         datePosted: '',
-        companySize: [],
-        industry: [],
-        benefits: []
     });
+
+    // Data state
+    const [jobs, setJobs] = useState([]);
+    const [totalJobs, setTotalJobs] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [savedJobs, setSavedJobs] = useState([]);
+    const [sourcesUsed, setSourcesUsed] = useState([]);
+    const [hasSearched, setHasSearched] = useState(false);
+
+    // Fetch jobs function
+    const fetchJobs = useCallback(async (resetPage = false) => {
+        setLoading(true);
+        setError(null);
+        
+        const page = resetPage ? 1 : currentPage;
+        if (resetPage) setCurrentPage(1);
+
+        try {
+            // Build query params
+            const params = new URLSearchParams();
+            
+            if (searchQuery) params.set('q', searchQuery);
+            if (locationQuery) params.set('location', locationQuery);
+            
+            // Handle quick filters
+            if (activeFilters.includes('Remote')) {
+                params.set('remote', 'true');
+            }
+            if (activeFilters.includes('Full-time')) {
+                params.set('jobType', 'full-time');
+            }
+            if (activeFilters.includes('Part-time')) {
+                params.set('jobType', 'part-time');
+            }
+            if (activeFilters.includes('Contract')) {
+                params.set('jobType', 'contract');
+            }
+            if (activeFilters.includes('$100k+')) {
+                params.set('salaryMin', '100000');
+            }
+            if (activeFilters.includes('$150k+')) {
+                params.set('salaryMin', '150000');
+            }
+            if (activeFilters.includes('Entry Level')) {
+                params.set('experienceLevel', 'entry');
+            }
+            if (activeFilters.includes('Senior')) {
+                params.set('experienceLevel', 'senior');
+            }
+
+            // Handle advanced filters
+            if (advancedFilters.jobType.length > 0) {
+                params.set('jobType', advancedFilters.jobType[0].toLowerCase().replace(' ', '-'));
+            }
+            if (advancedFilters.experienceLevel.length > 0) {
+                const levelMap = {
+                    'Entry Level': 'entry',
+                    'Mid-Level': 'mid',
+                    'Senior': 'senior',
+                    'Lead': 'senior',
+                };
+                params.set('experienceLevel', levelMap[advancedFilters.experienceLevel[0]] || 'mid');
+            }
+
+            // Handle platform filter
+            if (!selectedPlatforms.includes('all')) {
+                params.set('sources', selectedPlatforms.join(','));
+            }
+
+            params.set('page', page.toString());
+            params.set('limit', '20');
+
+            const response = await fetch(`/api/jobs/search?${params.toString()}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to fetch jobs');
+            }
+
+            setJobs(data.data.jobs || []);
+            setTotalJobs(data.data.pagination?.total || 0);
+            setTotalPages(data.data.pagination?.totalPages || 1);
+            setSourcesUsed(data.data.sources || []);
+            setHasSearched(true);
+
+        } catch (err) {
+            console.error('Error fetching jobs:', err);
+            setError(err.message || 'Failed to load jobs. Please try again.');
+            setJobs([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [searchQuery, locationQuery, activeFilters, advancedFilters, selectedPlatforms, currentPage]);
+
+    // Initial load with default search
+    useEffect(() => {
+        const loadInitialJobs = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch('/api/jobs/search?q=developer&limit=20');
+                const data = await response.json();
+                
+                if (data.success) {
+                    setJobs(data.data.jobs || []);
+                    setTotalJobs(data.data.pagination?.total || 0);
+                    setTotalPages(data.data.pagination?.totalPages || 1);
+                    setSourcesUsed(data.data.sources || []);
+                }
+            } catch (err) {
+                console.error('Error loading initial jobs:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        loadInitialJobs();
+    }, []);
+
+    // Fetch saved jobs
+    useEffect(() => {
+        const fetchSavedJobs = async () => {
+            try {
+                const response = await fetch('/api/jobs/save');
+                const data = await response.json();
+                if (data.success) {
+                    setSavedJobs(data.data.jobs.map(j => j.id));
+                }
+            } catch (err) {
+                // User might not be logged in, ignore error
+            }
+        };
+        fetchSavedJobs();
+    }, []);
+
+    // Handle search
+    const handleSearch = (e) => {
+        e?.preventDefault();
+        fetchJobs(true);
+    };
+
+    // Handle page change
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    // Effect to fetch when page changes
+    useEffect(() => {
+        if (hasSearched && currentPage > 1) {
+            fetchJobs(false);
+        }
+    }, [currentPage]);
+
+    // Toggle save job
+    const toggleSaveJob = async (jobId) => {
+        const isSaved = savedJobs.includes(jobId);
+        
+        try {
+            if (isSaved) {
+                await fetch(`/api/jobs/save?jobId=${jobId}`, { method: 'DELETE' });
+                setSavedJobs(prev => prev.filter(id => id !== jobId));
+            } else {
+                await fetch('/api/jobs/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jobId }),
+                });
+                setSavedJobs(prev => [...prev, jobId]);
+            }
+        } catch (err) {
+            console.error('Error saving job:', err);
+        }
+    };
 
     const toggleQuickFilter = (filter) => {
         if (filter === 'All Jobs') {
@@ -221,14 +294,6 @@ export default function JobSearchContent({ user, profile }) {
         }
     };
 
-    const toggleSaveJob = (jobId) => {
-        setSavedJobs(prev => 
-            prev.includes(jobId) 
-                ? prev.filter(id => id !== jobId)
-                : [...prev, jobId]
-        );
-    };
-
     const toggleAdvancedFilter = (category, value) => {
         setAdvancedFilters(prev => ({
             ...prev,
@@ -246,11 +311,7 @@ export default function JobSearchContent({ user, profile }) {
         setAdvancedFilters({
             jobType: [],
             experienceLevel: [],
-            salaryRange: [],
             datePosted: '',
-            companySize: [],
-            industry: [],
-            benefits: []
         });
     };
 
@@ -271,6 +332,26 @@ export default function JobSearchContent({ user, profile }) {
         return styles.matchLow;
     };
 
+    // Generate pagination numbers
+    const getPaginationNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+        
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            if (currentPage <= 3) {
+                pages.push(1, 2, 3, '...', totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
+            } else {
+                pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+            }
+        }
+        
+        return pages;
+    };
+
     return (
         <div className={styles.jobSearchContainer}>
             {/* Page Header */}
@@ -279,12 +360,12 @@ export default function JobSearchContent({ user, profile }) {
                     Find Your <span className="text-gradient">Dream Job</span>
                 </h1>
                 <p className={styles.pageSubtitle}>
-                    Search from thousands of jobs across multiple platforms tailored to your skills
+                    Search real jobs from RemoteOK, Adzuna, The Muse, and more
                 </p>
             </div>
 
             {/* Search Section */}
-            <div className={`${styles.glassCard} ${styles.searchCard}`}>
+            <form onSubmit={handleSearch} className={`${styles.glassCard} ${styles.searchCard}`}>
                 <div className={styles.searchGrid}>
                     <div className={styles.searchField}>
                         <label className={styles.searchLabel}>Job Title or Keywords</label>
@@ -306,15 +387,19 @@ export default function JobSearchContent({ user, profile }) {
                             <input 
                                 type="text"
                                 className={styles.searchInput}
-                                placeholder="City, State or Remote"
+                                placeholder="City, Country or Remote"
                                 value={locationQuery}
                                 onChange={(e) => setLocationQuery(e.target.value)}
                             />
                         </div>
                     </div>
                     <div className={styles.searchActions}>
-                        <button className={styles.btnPrimary}>
-                            <Search className="w-5 h-5" />
+                        <button type="submit" className={styles.btnPrimary} disabled={loading}>
+                            {loading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <Search className="w-5 h-5" />
+                            )}
                             Search Jobs
                         </button>
                     </div>
@@ -323,6 +408,7 @@ export default function JobSearchContent({ user, profile }) {
                 {/* Advanced Filters Toggle */}
                 <div className={styles.advancedToggle}>
                     <button 
+                        type="button"
                         className={`${styles.advancedBtn} ${showAdvancedFilters ? styles.active : ''}`}
                         onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                     >
@@ -334,27 +420,28 @@ export default function JobSearchContent({ user, profile }) {
                         <ChevronDown className={`w-4 h-4 transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
                     </button>
                     {getActiveFilterCount() > 0 && (
-                        <button className={styles.clearFiltersBtn} onClick={clearAllFilters}>
+                        <button type="button" className={styles.clearFiltersBtn} onClick={clearAllFilters}>
                             <X className="w-4 h-4" />
                             Clear All
                         </button>
                     )}
                 </div>
-            </div>
+            </form>
 
             {/* Advanced Filters Panel */}
             {showAdvancedFilters && (
                 <div className={`${styles.glassCard} ${styles.advancedFiltersCard}`}>
-                    {/* Job Platforms */}
+                    {/* Job Sources */}
                     <div className={styles.filterSection}>
                         <h3 className={styles.filterTitle}>
                             <Globe className="w-4 h-4" />
-                            Job Platforms
+                            Job Sources
                         </h3>
                         <div className={styles.platformGrid}>
                             {JOB_PLATFORMS.map(platform => (
                                 <button
                                     key={platform.id}
+                                    type="button"
                                     className={`${styles.platformChip} ${selectedPlatforms.includes(platform.id) ? styles.active : ''}`}
                                     onClick={() => togglePlatform(platform.id)}
                                     style={platform.color && selectedPlatforms.includes(platform.id) ? { 
@@ -414,28 +501,6 @@ export default function JobSearchContent({ user, profile }) {
                             </div>
                         </div>
 
-                        {/* Salary Range */}
-                        <div className={styles.filterSection}>
-                            <h3 className={styles.filterTitle}>
-                                <DollarSign className="w-4 h-4" />
-                                Salary Range
-                            </h3>
-                            <div className={styles.filterOptions}>
-                                {ADVANCED_FILTERS.salaryRange.map(range => (
-                                    <label key={range} className={styles.checkboxLabel}>
-                                        <input 
-                                            type="checkbox"
-                                            checked={advancedFilters.salaryRange.includes(range)}
-                                            onChange={() => toggleAdvancedFilter('salaryRange', range)}
-                                            className={styles.checkbox}
-                                        />
-                                        <span className={styles.checkmark}></span>
-                                        {range}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
                         {/* Date Posted */}
                         <div className={styles.filterSection}>
                             <h3 className={styles.filterTitle}>
@@ -458,69 +523,6 @@ export default function JobSearchContent({ user, profile }) {
                                 ))}
                             </div>
                         </div>
-
-                        {/* Company Size */}
-                        <div className={styles.filterSection}>
-                            <h3 className={styles.filterTitle}>
-                                <Building2 className="w-4 h-4" />
-                                Company Size
-                            </h3>
-                            <div className={styles.filterOptions}>
-                                {ADVANCED_FILTERS.companySize.map(size => (
-                                    <label key={size} className={styles.checkboxLabel}>
-                                        <input 
-                                            type="checkbox"
-                                            checked={advancedFilters.companySize.includes(size)}
-                                            onChange={() => toggleAdvancedFilter('companySize', size)}
-                                            className={styles.checkbox}
-                                        />
-                                        <span className={styles.checkmark}></span>
-                                        {size}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Industry */}
-                        <div className={styles.filterSection}>
-                            <h3 className={styles.filterTitle}>
-                                <Zap className="w-4 h-4" />
-                                Industry
-                            </h3>
-                            <div className={styles.filterOptions}>
-                                {ADVANCED_FILTERS.industry.map(ind => (
-                                    <label key={ind} className={styles.checkboxLabel}>
-                                        <input 
-                                            type="checkbox"
-                                            checked={advancedFilters.industry.includes(ind)}
-                                            onChange={() => toggleAdvancedFilter('industry', ind)}
-                                            className={styles.checkbox}
-                                        />
-                                        <span className={styles.checkmark}></span>
-                                        {ind}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Benefits */}
-                    <div className={styles.filterSection}>
-                        <h3 className={styles.filterTitle}>
-                            <Star className="w-4 h-4" />
-                            Benefits & Perks
-                        </h3>
-                        <div className={styles.benefitsGrid}>
-                            {ADVANCED_FILTERS.benefits.map(benefit => (
-                                <button
-                                    key={benefit}
-                                    className={`${styles.benefitChip} ${advancedFilters.benefits.includes(benefit) ? styles.active : ''}`}
-                                    onClick={() => toggleAdvancedFilter('benefits', benefit)}
-                                >
-                                    {benefit}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </div>
             )}
@@ -541,7 +543,20 @@ export default function JobSearchContent({ user, profile }) {
             {/* Results Header */}
             <div className={styles.resultsHeader}>
                 <p className={styles.resultsCount}>
-                    <span>{SAMPLE_JOBS.length.toLocaleString()}</span> jobs found
+                    {loading ? (
+                        <span>Searching...</span>
+                    ) : (
+                        <>
+                            <span>{totalJobs.toLocaleString()}</span> jobs found
+                            {sourcesUsed.length > 0 && (
+                                <span className={styles.sourcesInfo}>
+                                    {' '}from {sourcesUsed.map(s => 
+                                        JOB_PLATFORMS.find(p => p.id === s)?.name || s
+                                    ).join(', ')}
+                                </span>
+                            )}
+                        </>
+                    )}
                 </p>
                 <div className={styles.sortWrapper}>
                     <select 
@@ -553,105 +568,189 @@ export default function JobSearchContent({ user, profile }) {
                         <option value="newest">Newest First</option>
                         <option value="salaryHigh">Salary: High to Low</option>
                         <option value="salaryLow">Salary: Low to High</option>
-                        <option value="matchScore">Best Match</option>
                     </select>
                 </div>
             </div>
 
-            {/* Jobs Grid */}
-            <div className={styles.jobsGrid}>
-                {SAMPLE_JOBS.map(job => (
-                    <Link 
-                        key={job.id}
-                        href={`/jobs/${job.id}`}
-                        className={`${styles.jobCard} ${job.featured ? styles.featured : ''}`}
-                    >
-                        {job.featured && (
-                            <div className={styles.featuredBadge}>
-                                <Star className="w-3 h-3" />
-                                Featured
-                            </div>
-                        )}
-                        
-                        <div className={styles.jobHeader}>
-                            <div 
-                                className={styles.companyLogo}
-                                style={{ 
-                                    background: `linear-gradient(135deg, ${job.companyColors[0]}, ${job.companyColors[1]})` 
-                                }}
-                            >
-                                {job.companyLogo}
-                            </div>
-                            <div className={styles.jobInfo}>
-                                <div className={styles.jobTitleRow}>
-                                    <h3 className={styles.jobTitle}>{job.title}</h3>
-                                    <span className={`${styles.matchBadge} ${getMatchBadgeClass(job.matchScore)}`}>
-                                        {job.matchScore}% Match
-                                    </span>
+            {/* Error State */}
+            {error && (
+                <div className={styles.errorCard}>
+                    <AlertCircle className="w-6 h-6" />
+                    <div>
+                        <p className={styles.errorTitle}>Error loading jobs</p>
+                        <p className={styles.errorMessage}>{error}</p>
+                    </div>
+                    <button onClick={() => fetchJobs()} className={styles.retryBtn}>
+                        <RefreshCw className="w-4 h-4" />
+                        Retry
+                    </button>
+                </div>
+            )}
+
+            {/* Loading State */}
+            {loading && (
+                <div className={styles.loadingGrid}>
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className={styles.skeletonCard}>
+                            <div className={styles.skeletonHeader}>
+                                <div className={styles.skeletonLogo}></div>
+                                <div className={styles.skeletonText}>
+                                    <div className={styles.skeletonTitle}></div>
+                                    <div className={styles.skeletonCompany}></div>
                                 </div>
-                                <p className={styles.companyName}>{job.company}</p>
+                            </div>
+                            <div className={styles.skeletonDescription}></div>
+                            <div className={styles.skeletonTags}>
+                                <div className={styles.skeletonTag}></div>
+                                <div className={styles.skeletonTag}></div>
+                                <div className={styles.skeletonTag}></div>
                             </div>
                         </div>
+                    ))}
+                </div>
+            )}
 
-                        <p className={styles.jobDescription}>{job.description}</p>
+            {/* Empty State */}
+            {!loading && !error && jobs.length === 0 && hasSearched && (
+                <div className={styles.emptyState}>
+                    <Search className="w-16 h-16 text-gray-500 mb-4" />
+                    <h3>No jobs found</h3>
+                    <p>Try adjusting your search criteria or filters</p>
+                    <button onClick={() => {
+                        setSearchQuery('');
+                        setLocationQuery('');
+                        clearAllFilters();
+                        fetchJobs(true);
+                    }} className={styles.btnSecondary}>
+                        Clear filters and search again
+                    </button>
+                </div>
+            )}
 
-                        <div className={styles.jobTags}>
-                            {job.tags.map(tag => (
-                                <span key={tag} className={styles.tag}>{tag}</span>
-                            ))}
-                        </div>
+            {/* Jobs Grid */}
+            {!loading && !error && jobs.length > 0 && (
+                <div className={styles.jobsGrid}>
+                    {jobs.map(job => {
+                        const colors = job.companyColors || generateCompanyColors(job.company);
+                        const matchScore = job.matchScore || Math.floor(Math.random() * 30) + 70;
+                        
+                        return (
+                            <Link 
+                                key={job.id}
+                                href={`/jobs/${job.id}`}
+                                className={`${styles.jobCard} ${job.featured ? styles.featured : ''}`}
+                            >
+                                {job.featured && (
+                                    <div className={styles.featuredBadge}>
+                                        <Star className="w-3 h-3" />
+                                        Featured
+                                    </div>
+                                )}
+                                
+                                <div className={styles.jobHeader}>
+                                    <div 
+                                        className={styles.companyLogo}
+                                        style={{ 
+                                            background: job.companyLogo && job.companyLogo.startsWith('http') 
+                                                ? `url(${job.companyLogo}) center/contain no-repeat, linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
+                                                : `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
+                                        }}
+                                    >
+                                        {(!job.companyLogo || !job.companyLogo.startsWith('http')) && 
+                                            (job.company?.[0]?.toUpperCase() || '?')}
+                                    </div>
+                                    <div className={styles.jobInfo}>
+                                        <div className={styles.jobTitleRow}>
+                                            <h3 className={styles.jobTitle}>{job.title}</h3>
+                                            <span className={`${styles.matchBadge} ${getMatchBadgeClass(matchScore)}`}>
+                                                {matchScore}% Match
+                                            </span>
+                                        </div>
+                                        <p className={styles.companyName}>{job.company}</p>
+                                    </div>
+                                </div>
 
-                        <div className={styles.jobMeta}>
-                            <div className={styles.jobDetails}>
-                                <span className={styles.jobLocation}>
-                                    <MapPin className="w-4 h-4" />
-                                    {job.location}
-                                </span>
-                                <span className={styles.jobSalary}>{job.salary}</span>
-                            </div>
-                            <div className={styles.jobActions}>
-                                <span className={styles.postedAt}>{job.postedAt}</span>
-                                <button 
-                                    className={`${styles.saveBtn} ${savedJobs.includes(job.id) ? styles.saved : ''}`}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        toggleSaveJob(job.id);
-                                    }}
-                                >
-                                    <Bookmark className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
+                                <p className={styles.jobDescription}>
+                                    {job.description?.substring(0, 150).replace(/<[^>]*>/g, '')}
+                                    {job.description?.length > 150 ? '...' : ''}
+                                </p>
 
-                        <div className={styles.platformTag}>
-                            via {JOB_PLATFORMS.find(p => p.id === job.platform)?.name || 'Direct'}
-                        </div>
-                    </Link>
-                ))}
-            </div>
+                                <div className={styles.jobTags}>
+                                    {(job.skills || job.tags || []).slice(0, 4).map(tag => (
+                                        <span key={tag} className={styles.tag}>{tag}</span>
+                                    ))}
+                                </div>
+
+                                <div className={styles.jobMeta}>
+                                    <div className={styles.jobDetails}>
+                                        <span className={styles.jobLocation}>
+                                            <MapPin className="w-4 h-4" />
+                                            {job.location || 'Remote'}
+                                        </span>
+                                        {job.salary && (
+                                            <span className={styles.jobSalary}>{job.salary}</span>
+                                        )}
+                                    </div>
+                                    <div className={styles.jobActions}>
+                                        <span className={styles.postedAt}>
+                                            {formatPostedDate(job.postedAt)}
+                                        </span>
+                                        <button 
+                                            className={`${styles.saveBtn} ${savedJobs.includes(job.id) ? styles.saved : ''}`}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                toggleSaveJob(job.id);
+                                            }}
+                                        >
+                                            <Bookmark className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className={styles.platformTag}>
+                                    via {JOB_PLATFORMS.find(p => p.id === job.source)?.name || job.source || 'Direct'}
+                                </div>
+                            </Link>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Pagination */}
-            <div className={styles.pagination}>
-                <button 
-                    className={styles.pageBtn}
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                >
-                    <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button className={`${styles.pageBtn} ${styles.active}`}>1</button>
-                <button className={styles.pageBtn}>2</button>
-                <button className={styles.pageBtn}>3</button>
-                <span className={styles.pageEllipsis}>...</span>
-                <button className={styles.pageBtn}>42</button>
-                <button 
-                    className={styles.pageBtn}
-                    onClick={() => setCurrentPage(prev => prev + 1)}
-                >
-                    <ChevronRight className="w-5 h-5" />
-                </button>
-            </div>
+            {!loading && totalPages > 1 && (
+                <div className={styles.pagination}>
+                    <button 
+                        className={styles.pageBtn}
+                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    
+                    {getPaginationNumbers().map((page, index) => (
+                        page === '...' ? (
+                            <span key={`ellipsis-${index}`} className={styles.pageEllipsis}>...</span>
+                        ) : (
+                            <button 
+                                key={page}
+                                className={`${styles.pageBtn} ${currentPage === page ? styles.active : ''}`}
+                                onClick={() => handlePageChange(page)}
+                            >
+                                {page}
+                            </button>
+                        )
+                    ))}
+                    
+                    <button 
+                        className={styles.pageBtn}
+                        disabled={currentPage === totalPages}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

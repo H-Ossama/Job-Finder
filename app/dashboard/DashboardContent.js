@@ -150,58 +150,15 @@ function JobCard({ company, initial, gradient, title, location, matchScore, desc
     );
 }
 
-export default function DashboardContent({ user, cvs, applications }) {
+export default function DashboardContent({ user, cvs, applications, jobMatches = [], activities = [] }) {
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
     const firstName = userName.split(' ')[0];
     
     const cvCount = cvs?.length || 0;
     const applicationCount = applications?.length || 0;
 
-    // Sample activity data
-    const activities = [
-        { color: 'bg-green-500', text: 'New job match:', highlight: 'Senior Developer at Google', time: '2 minutes ago' },
-        { color: 'bg-indigo-500', text: 'CV updated:', highlight: 'Software Engineer CV', time: '1 hour ago' },
-        { color: 'bg-amber-500', text: 'Application viewed by', highlight: 'Amazon', time: '3 hours ago' },
-        { color: 'bg-pink-500', text: 'Interview scheduled with', highlight: 'Stripe', time: 'Yesterday' },
-        { color: 'bg-purple-500', text: 'Applied to', highlight: 'Netflix', time: '2 days ago' },
-    ];
-
-    // Sample job data
-    const jobMatches = [
-        {
-            company: 'Google',
-            initial: 'G',
-            gradient: 'bg-gradient-to-br from-blue-500 to-cyan-500',
-            title: 'Senior Software Engineer',
-            location: 'Mountain View, CA',
-            matchScore: 98,
-            description: 'Join our team to build cutting-edge AI products that impact billions of users worldwide...',
-            tags: ['React', 'Python', 'AI/ML'],
-            salary: '$180k - $250k'
-        },
-        {
-            company: 'Amazon',
-            initial: 'A',
-            gradient: 'bg-gradient-to-br from-orange-500 to-red-500',
-            title: 'Full Stack Developer',
-            location: 'Remote',
-            matchScore: 95,
-            description: 'Work on AWS services used by millions of developers. Build scalable solutions...',
-            tags: ['TypeScript', 'AWS', 'Node.js'],
-            salary: '$150k - $200k'
-        },
-        {
-            company: 'Stripe',
-            initial: 'S',
-            gradient: 'bg-gradient-to-br from-purple-500 to-pink-500',
-            title: 'Backend Engineer',
-            location: 'San Francisco, CA',
-            matchScore: 87,
-            description: 'Help build the financial infrastructure for the internet. Work on payments APIs...',
-            tags: ['Ruby', 'Go', 'PostgreSQL'],
-            salary: '$160k - $220k'
-        }
-    ];
+    // Activity and job data will be passed as props or fetched from API
+    // Mock data removed - using props with defaults
 
     return (
         <>

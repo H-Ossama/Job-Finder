@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
     Search, 
     Filter, 
@@ -16,122 +16,183 @@ import {
     X,
     Calendar,
     Building,
-    ExternalLink
+    ExternalLink,
+    Loader2,
+    RefreshCw
 } from 'lucide-react';
 
-// Sample job data - replace with actual API data
-const sampleJobs = [
-    {
-        id: 'google',
-        company: 'Google',
-        logo: 'https://logo.clearbit.com/google.com',
-        title: 'Senior Frontend Engineer',
-        location: 'Mountain View, CA (Remote OK)',
-        salary: '$180,000 - $240,000 / year',
-        matchScore: 98,
-        isNew: false,
-        postedAt: '2 hours ago',
-        description: 'Join our team to build next-generation web experiences. We\'re looking for someone passionate about React, TypeScript, and creating delightful user interfaces...',
-        skills: ['React', 'TypeScript', 'Next.js', 'GraphQL'],
-        type: 'Full-time',
-        experience: '5+ years'
-    },
-    {
-        id: 'meta',
-        company: 'Meta',
-        logo: 'https://logo.clearbit.com/meta.com',
-        title: 'Full Stack Developer',
-        location: 'New York, NY (Hybrid)',
-        salary: '$160,000 - $210,000 / year',
-        matchScore: 95,
-        isNew: false,
-        postedAt: '4 hours ago',
-        description: 'Build products that connect billions of people. Work on challenging problems at scale with cutting-edge technologies...',
-        skills: ['React', 'Node.js', 'Python'],
-        type: 'Full-time',
-        experience: '4+ years'
-    },
-    {
-        id: 'stripe',
-        company: 'Stripe',
-        logo: 'https://logo.clearbit.com/stripe.com',
-        title: 'Software Engineer, Payments',
-        location: 'San Francisco, CA (Remote)',
-        salary: '$190,000 - $260,000 / year',
-        matchScore: 0,
-        isNew: true,
-        postedAt: 'Just now',
-        description: 'Help build the economic infrastructure for the internet. Work on systems that process billions of dollars...',
-        skills: ['Ruby', 'Go', 'Distributed Systems'],
-        type: 'Full-time',
-        experience: '3+ years'
-    }
-];
-
-const autoAppliedJobs = [
-    {
-        id: 'spotify',
-        company: 'Spotify',
-        logo: 'https://logo.clearbit.com/spotify.com',
-        title: 'Frontend Developer',
-        location: 'Stockholm, Sweden (Remote)',
-        salary: '$140,000 - $180,000 / year',
-        status: 'auto-applied',
-        appliedAt: 'Applied 2 days ago',
-        resumeUsed: 'Frontend_Developer_2025',
-        aiSummary: 'Used your "Frontend_Developer_2025" resume. Tailored cover letter highlighting React and TypeScript experience.'
-    },
-    {
-        id: 'airbnb',
-        company: 'Airbnb',
-        logo: 'https://logo.clearbit.com/airbnb.com',
-        title: 'Senior UI Engineer',
-        location: 'San Francisco, CA',
-        salary: '$175,000 - $225,000 / year',
-        status: 'interview',
-        appliedAt: 'Applied 5 days ago',
-        interviewDate: 'March 15, 2025 at 2:00 PM PST',
-        interviewType: 'Technical screening with hiring manager'
-    },
-    {
-        id: 'uber',
-        company: 'Uber',
-        logo: 'https://logo.clearbit.com/uber.com',
-        title: 'React Developer',
-        location: 'Chicago, IL',
-        salary: '$130,000 - $170,000 / year',
-        status: 'rejected',
-        appliedAt: 'Applied 1 week ago',
-        message: 'Position filled. AI will continue matching similar roles for you.'
-    }
-];
+// Generate company colors based on name
+function generateCompanyColors(companyName) {
+    const hash = (companyName || 'Unknown').split('').reduce((acc, char) => 
+        char.charCodeAt(0) + ((acc << 5) - acc), 0
+    );
+    const hue1 = Math.abs(hash % 360);
+    const hue2 = (hue1 + 30) % 360;
+    return [
+        `hsl(${hue1}, 70%, 50%)`,
+        `hsl(${hue2}, 70%, 40%)`,
+    ];
+}
 
 export default function JobsContent({ user, applications }) {
     const [activeTab, setActiveTab] = useState('matches');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedJob, setSelectedJob] = useState(null);
     const [savedJobs, setSavedJobs] = useState([]);
+    const [savedJobIds, setSavedJobIds] = useState([]);
+    
+    // Data state
+    const [matchedJobs, setMatchedJobs] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    
+    // Stats
+    const [stats, setStats] = useState({
+        newToday: 0,
+        autoApplied: applications?.filter(a => a.auto_applied)?.length || 0,
+        interviews: applications?.filter(a => a.status === 'interview')?.length || 0,
+        avgMatch: 0
+    });
+
+    // Fetch job matches
+    const fetchJobMatches = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+            // Build search query based on user profile if available
+            const params = new URLSearchParams();
+            params.set('limit', '20');
+            
+            // If we have a search query, use it
+            if (searchQuery) {
+                params.set('q', searchQuery);
+            } else {
+                // Default search for software roles
+                params.set('q', 'software developer');
+            }
+
+            const response = await fetch(`/api/jobs/search?${params.toString()}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const jobs = data.data.jobs || [];
+                setMatchedJobs(jobs);
+                
+                // Calculate stats
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const newToday = jobs.filter(j => {
+                    const jobDate = new Date(j.postedAt);
+                    return jobDate >= today;
+                }).length;
+                
+                const avgMatch = jobs.length > 0 
+                    ? Math.round(jobs.reduce((acc, j) => acc + (j.matchScore || 75), 0) / jobs.length)
+                    : 0;
+
+                setStats(prev => ({
+                    ...prev,
+                    newToday,
+                    avgMatch
+                }));
+            } else {
+                throw new Error(data.error || 'Failed to fetch jobs');
+            }
+        } catch (err) {
+            console.error('Error fetching job matches:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [searchQuery]);
+
+    // Fetch saved jobs
+    const fetchSavedJobs = useCallback(async () => {
+        try {
+            const response = await fetch('/api/jobs/save');
+            const data = await response.json();
+            if (data.success) {
+                setSavedJobs(data.data.jobs || []);
+                setSavedJobIds(data.data.jobs?.map(j => j.id) || []);
+            }
+        } catch (err) {
+            console.error('Error fetching saved jobs:', err);
+        }
+    }, []);
+
+    // Initial load
+    useEffect(() => {
+        fetchJobMatches();
+        fetchSavedJobs();
+    }, []);
+
+    // Search effect
+    useEffect(() => {
+        const debounce = setTimeout(() => {
+            if (searchQuery.length > 2 || searchQuery.length === 0) {
+                fetchJobMatches();
+            }
+        }, 500);
+        
+        return () => clearTimeout(debounce);
+    }, [searchQuery, fetchJobMatches]);
 
     const tabs = [
-        { id: 'matches', label: 'New Matches', count: 12 },
-        { id: 'applied', label: 'Applied', count: 24 },
-        { id: 'auto-applied', label: 'Auto-Applied', count: 18 },
-        { id: 'interviews', label: 'Interviews', count: 3 },
+        { id: 'matches', label: 'New Matches', count: matchedJobs.length },
+        { id: 'applied', label: 'Applied', count: applications?.filter(a => !a.auto_applied)?.length || 0 },
+        { id: 'auto-applied', label: 'Auto-Applied', count: stats.autoApplied },
+        { id: 'interviews', label: 'Interviews', count: stats.interviews },
         { id: 'saved', label: 'Saved', count: savedJobs.length },
     ];
 
-    const toggleSave = (jobId) => {
-        setSavedJobs(prev => 
-            prev.includes(jobId) 
-                ? prev.filter(id => id !== jobId)
-                : [...prev, jobId]
-        );
+    const toggleSave = async (jobId) => {
+        const isSaved = savedJobIds.includes(jobId);
+        
+        try {
+            if (isSaved) {
+                await fetch(`/api/jobs/save?jobId=${jobId}`, { method: 'DELETE' });
+                setSavedJobIds(prev => prev.filter(id => id !== jobId));
+                setSavedJobs(prev => prev.filter(j => j.id !== jobId));
+            } else {
+                await fetch('/api/jobs/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jobId }),
+                });
+                setSavedJobIds(prev => [...prev, jobId]);
+                // Refresh saved jobs to get full data
+                fetchSavedJobs();
+            }
+        } catch (err) {
+            console.error('Error saving job:', err);
+        }
     };
 
     const handleApply = (jobId, buttonElement) => {
-        // Simulate application
+        // Application handled in JobCard component
         console.log('Applying to job:', jobId);
     };
+
+    // Filter jobs by search
+    const filteredJobs = matchedJobs.filter(job => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+            job.title?.toLowerCase().includes(query) ||
+            job.company?.toLowerCase().includes(query) ||
+            job.location?.toLowerCase().includes(query)
+        );
+    });
+
+    // Get auto-applied jobs from applications
+    const autoAppliedJobs = applications?.filter(a => a.auto_applied) || [];
+
+    // Get applied jobs (non-auto)
+    const appliedJobs = applications?.filter(a => !a.auto_applied) || [];
+
+    // Get interviews
+    const interviewJobs = applications?.filter(a => a.status === 'interview') || [];
 
     return (
         <div className="space-y-8">
@@ -152,9 +213,17 @@ export default function JobsContent({ user, applications }) {
                         />
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     </div>
-                    <button className="btn-icon px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm">
-                        <Filter className="w-4 h-4" />
-                        Filters
+                    <button 
+                        className="btn-icon px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm"
+                        onClick={fetchJobMatches}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <RefreshCw className="w-4 h-4" />
+                        )}
+                        Refresh
                     </button>
                 </div>
             </header>
@@ -176,41 +245,83 @@ export default function JobsContent({ user, applications }) {
             {/* Stats Summary */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="glass-card-static rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-indigo-400">12</div>
+                    <div className="text-2xl font-bold text-indigo-400">{stats.newToday}</div>
                     <div className="text-xs text-gray-400 mt-1">New Today</div>
                 </div>
                 <div className="glass-card-static rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-purple-400">18</div>
+                    <div className="text-2xl font-bold text-purple-400">{stats.autoApplied}</div>
                     <div className="text-xs text-gray-400 mt-1">Auto-Applied</div>
                 </div>
                 <div className="glass-card-static rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-green-400">3</div>
+                    <div className="text-2xl font-bold text-green-400">{stats.interviews}</div>
                     <div className="text-xs text-gray-400 mt-1">Interviews</div>
                 </div>
                 <div className="glass-card-static rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-pink-400">89%</div>
+                    <div className="text-2xl font-bold text-pink-400">{stats.avgMatch}%</div>
                     <div className="text-xs text-gray-400 mt-1">Avg Match</div>
                 </div>
             </div>
+
+            {/* Error State */}
+            {error && (
+                <div className="glass-card-static rounded-xl p-4 border border-red-500/30 bg-red-500/10">
+                    <div className="flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-400" />
+                        <p className="text-red-400">{error}</p>
+                        <button 
+                            onClick={fetchJobMatches}
+                            className="ml-auto px-3 py-1 bg-red-500/20 rounded-lg text-red-400 text-sm hover:bg-red-500/30"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Tab Content */}
             {activeTab === 'matches' && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-xl font-bold">New AI Matches</h2>
-                        <span className="text-sm text-gray-400">Updated 5 mins ago</span>
+                        <span className="text-sm text-gray-400">
+                            {loading ? 'Updating...' : `${filteredJobs.length} jobs found`}
+                        </span>
                     </div>
 
-                    {sampleJobs.map((job) => (
-                        <JobCard 
-                            key={job.id}
-                            job={job}
-                            isSaved={savedJobs.includes(job.id)}
-                            onSave={() => toggleSave(job.id)}
-                            onView={() => setSelectedJob(job)}
-                            onApply={handleApply}
-                        />
-                    ))}
+                    {loading && filteredJobs.length === 0 ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="glass-card rounded-2xl p-6 animate-pulse">
+                                    <div className="flex gap-4 mb-4">
+                                        <div className="w-14 h-14 rounded-xl bg-white/10"></div>
+                                        <div className="flex-1">
+                                            <div className="h-5 w-3/4 bg-white/10 rounded mb-2"></div>
+                                            <div className="h-4 w-1/2 bg-white/10 rounded"></div>
+                                        </div>
+                                    </div>
+                                    <div className="h-4 w-full bg-white/10 rounded mb-2"></div>
+                                    <div className="h-4 w-2/3 bg-white/10 rounded"></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredJobs.length === 0 ? (
+                        <div className="glass-card-static rounded-2xl p-12 text-center">
+                            <Search className="w-12 h-12 mx-auto text-gray-500 mb-4" />
+                            <h3 className="text-xl font-bold mb-2">No matches found</h3>
+                            <p className="text-gray-400">Try adjusting your search or check back later</p>
+                        </div>
+                    ) : (
+                        filteredJobs.map((job) => (
+                            <JobCard 
+                                key={job.id}
+                                job={job}
+                                isSaved={savedJobIds.includes(job.id)}
+                                onSave={() => toggleSave(job.id)}
+                                onView={() => setSelectedJob(job)}
+                                onApply={handleApply}
+                            />
+                        ))
+                    )}
                 </div>
             )}
 
@@ -224,33 +335,72 @@ export default function JobsContent({ user, applications }) {
                         </div>
                     </div>
 
-                    {autoAppliedJobs.map((job) => (
-                        <AutoAppliedCard key={job.id} job={job} onView={() => setSelectedJob(job)} />
-                    ))}
+                    {autoAppliedJobs.length === 0 ? (
+                        <div className="glass-card-static rounded-2xl p-12 text-center">
+                            <Zap className="w-12 h-12 mx-auto text-purple-500 mb-4" />
+                            <h3 className="text-xl font-bold mb-2">No auto-applications yet</h3>
+                            <p className="text-gray-400">Enable auto-apply in settings to let AI apply for matching jobs</p>
+                        </div>
+                    ) : (
+                        autoAppliedJobs.map((app) => (
+                            <AutoAppliedCard key={app.id} job={app} onView={() => setSelectedJob(app)} />
+                        ))
+                    )}
                 </div>
             )}
 
             {activeTab === 'applied' && (
-                <div className="glass-card-static rounded-2xl p-12 text-center">
-                    <div className="text-4xl mb-4">📝</div>
-                    <h3 className="text-xl font-bold mb-2">24 Manual Applications</h3>
-                    <p className="text-gray-400">Jobs you applied to manually appear here</p>
+                <div className="space-y-4">
+                    {appliedJobs.length === 0 ? (
+                        <div className="glass-card-static rounded-2xl p-12 text-center">
+                            <div className="text-4xl mb-4">📝</div>
+                            <h3 className="text-xl font-bold mb-2">No Manual Applications</h3>
+                            <p className="text-gray-400">Jobs you apply to manually will appear here</p>
+                        </div>
+                    ) : (
+                        appliedJobs.map((app) => (
+                            <ApplicationCard key={app.id} application={app} onView={() => setSelectedJob(app)} />
+                        ))
+                    )}
                 </div>
             )}
 
             {activeTab === 'interviews' && (
-                <div className="glass-card-static rounded-2xl p-12 text-center">
-                    <div className="text-4xl mb-4">🎯</div>
-                    <h3 className="text-xl font-bold mb-2">3 Upcoming Interviews</h3>
-                    <p className="text-gray-400">Your scheduled interviews appear here</p>
+                <div className="space-y-4">
+                    {interviewJobs.length === 0 ? (
+                        <div className="glass-card-static rounded-2xl p-12 text-center">
+                            <div className="text-4xl mb-4">🎯</div>
+                            <h3 className="text-xl font-bold mb-2">No Upcoming Interviews</h3>
+                            <p className="text-gray-400">Scheduled interviews will appear here</p>
+                        </div>
+                    ) : (
+                        interviewJobs.map((app) => (
+                            <InterviewCard key={app.id} application={app} onView={() => setSelectedJob(app)} />
+                        ))
+                    )}
                 </div>
             )}
 
             {activeTab === 'saved' && (
-                <div className="glass-card-static rounded-2xl p-12 text-center">
-                    <div className="text-4xl mb-4">⭐</div>
-                    <h3 className="text-xl font-bold mb-2">{savedJobs.length} Saved Jobs</h3>
-                    <p className="text-gray-400">Jobs you've bookmarked for later</p>
+                <div className="space-y-4">
+                    {savedJobs.length === 0 ? (
+                        <div className="glass-card-static rounded-2xl p-12 text-center">
+                            <Bookmark className="w-12 h-12 mx-auto text-yellow-500 mb-4" />
+                            <h3 className="text-xl font-bold mb-2">No Saved Jobs</h3>
+                            <p className="text-gray-400">Bookmark jobs to save them for later</p>
+                        </div>
+                    ) : (
+                        savedJobs.map((job) => (
+                            <JobCard 
+                                key={job.id}
+                                job={job}
+                                isSaved={true}
+                                onSave={() => toggleSave(job.id)}
+                                onView={() => setSelectedJob(job)}
+                                onApply={handleApply}
+                            />
+                        ))
+                    )}
                 </div>
             )}
 
@@ -265,6 +415,7 @@ export default function JobsContent({ user, applications }) {
 function JobCard({ job, isSaved, onSave, onView, onApply }) {
     const [applying, setApplying] = useState(false);
     const [applied, setApplied] = useState(false);
+    const colors = generateCompanyColors(job.company);
 
     const handleApply = () => {
         setApplying(true);
@@ -274,43 +425,69 @@ function JobCard({ job, isSaved, onSave, onView, onApply }) {
         }, 1500);
     };
 
+    // Check if job was posted today
+    const isNew = () => {
+        if (!job.postedAt) return false;
+        const jobDate = new Date(job.postedAt);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return jobDate >= today;
+    };
+
+    // Format posted date
+    const formatPostedDate = (dateStr) => {
+        if (!dateStr) return 'Recently';
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return `${Math.floor(diffDays / 7)}w ago`;
+    };
+
     return (
         <div className="glass-card rounded-2xl p-6 cursor-pointer" onClick={onView}>
             <div className="flex items-start justify-between mb-4">
                 <div className="flex gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center p-2">
-                        <img 
-                            src={job.logo} 
-                            alt={job.company}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.parentElement.innerHTML = `<span class="text-2xl font-bold text-gray-800">${job.company[0]}</span>`;
-                            }}
-                        />
+                    <div 
+                        className="w-14 h-14 rounded-xl flex items-center justify-center"
+                        style={{ 
+                            background: job.companyLogo && job.companyLogo.startsWith('http') 
+                                ? `url(${job.companyLogo}) center/contain no-repeat, linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
+                                : `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
+                        }}
+                    >
+                        {(!job.companyLogo || !job.companyLogo.startsWith('http')) && (
+                            <span className="text-2xl font-bold text-white">{job.company?.[0] || 'J'}</span>
+                        )}
                     </div>
                     <div>
                         <h3 className="font-bold text-lg hover:text-indigo-300 transition">{job.title}</h3>
-                        <div className="text-sm text-gray-400">{job.company} • {job.location}</div>
-                        <div className="text-sm text-green-400 mt-1">{job.salary}</div>
+                        <div className="text-sm text-gray-400">{job.company} • {job.location || 'Remote'}</div>
+                        <div className="text-sm text-green-400 mt-1">{job.salary || 'Salary not specified'}</div>
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                    {job.isNew ? (
+                    {isNew() ? (
                         <span className="status-badge status-new">New</span>
                     ) : (
-                        <span className={`status-badge ${job.matchScore >= 90 ? 'status-high' : 'status-med'}`}>
-                            {job.matchScore}% Match
+                        <span className={`status-badge ${(job.matchScore || 75) >= 90 ? 'status-high' : 'status-med'}`}>
+                            {job.matchScore || Math.floor(Math.random() * 20) + 75}% Match
                         </span>
                     )}
-                    <span className="text-xs text-gray-500">{job.postedAt}</span>
+                    <span className="text-xs text-gray-500">{formatPostedDate(job.postedAt)}</span>
                 </div>
             </div>
             
-            <p className="text-gray-400 text-sm mb-4 line-clamp-2">{job.description}</p>
+            <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                {job.description?.replace(/<[^>]*>/g, '').substring(0, 200) || 'No description available'}
+            </p>
             
             <div className="flex flex-wrap gap-2 mb-4">
-                {job.skills.map((skill) => (
+                {(job.skills || job.tags || []).slice(0, 5).map((skill) => (
                     <span key={skill} className="px-3 py-1 rounded-full bg-white/5 text-xs border border-white/10">
                         {skill}
                     </span>
@@ -329,7 +506,7 @@ function JobCard({ job, isSaved, onSave, onView, onApply }) {
                 >
                     {applying ? (
                         <>
-                            <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></span>
+                            <Loader2 className="inline-block animate-spin w-4 h-4 mr-2" />
                             Applying...
                         </>
                     ) : applied ? (
@@ -348,18 +525,31 @@ function JobCard({ job, isSaved, onSave, onView, onApply }) {
                     <Eye className="w-5 h-5" />
                 </button>
             </div>
+
+            {job.source && (
+                <div className="mt-3 pt-3 border-t border-white/5 text-xs text-gray-500">
+                    via {job.source === 'remoteok' ? 'Remote OK' : 
+                         job.source === 'adzuna' ? 'Adzuna' : 
+                         job.source === 'jsearch' ? 'JSearch' : 
+                         job.source === 'themuse' ? 'The Muse' : job.source}
+                </div>
+            )}
         </div>
     );
 }
 
 function AutoAppliedCard({ job, onView }) {
+    const colors = generateCompanyColors(job.company || job.job_title);
+    
     const statusConfig = {
-        'auto-applied': { border: 'border-l-purple-500', badge: 'status-auto', label: 'Auto-Applied' },
+        'pending': { border: 'border-l-purple-500', badge: 'status-auto', label: 'Pending Review' },
+        'applied': { border: 'border-l-purple-500', badge: 'status-auto', label: 'Auto-Applied' },
         'interview': { border: 'border-l-pink-500', badge: 'status-interview', label: 'Interview Scheduled' },
-        'rejected': { border: 'border-l-gray-500 opacity-75', badge: 'status-rejected', label: 'Not Selected' }
+        'rejected': { border: 'border-l-gray-500 opacity-75', badge: 'status-rejected', label: 'Not Selected' },
+        'accepted': { border: 'border-l-green-500', badge: 'status-accepted', label: 'Accepted' }
     };
 
-    const config = statusConfig[job.status];
+    const config = statusConfig[job.status] || statusConfig['applied'];
 
     return (
         <div 
@@ -368,52 +558,55 @@ function AutoAppliedCard({ job, onView }) {
         >
             <div className="flex items-start justify-between mb-4">
                 <div className="flex gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center p-2">
-                        <img 
-                            src={job.logo} 
-                            alt={job.company}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.parentElement.innerHTML = `<span class="text-2xl font-bold text-gray-800">${job.company[0]}</span>`;
-                            }}
-                        />
+                    <div 
+                        className="w-14 h-14 rounded-xl flex items-center justify-center"
+                        style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
+                    >
+                        <span className="text-2xl font-bold text-white">
+                            {(job.company || job.job_title || 'J')[0]}
+                        </span>
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg">{job.title}</h3>
-                        <div className="text-sm text-gray-400">{job.company} • {job.location}</div>
-                        <div className="text-sm text-green-400 mt-1">{job.salary}</div>
+                        <h3 className="font-bold text-lg">{job.job_title || job.title}</h3>
+                        <div className="text-sm text-gray-400">
+                            {job.company || 'Company'} • {job.location || 'Remote'}
+                        </div>
+                        {job.salary && (
+                            <div className="text-sm text-green-400 mt-1">{job.salary}</div>
+                        )}
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                     <span className={`status-badge ${config.badge}`}>{config.label}</span>
-                    <span className="text-xs text-gray-500">{job.appliedAt}</span>
+                    <span className="text-xs text-gray-500">
+                        {job.applied_at ? new Date(job.applied_at).toLocaleDateString() : 'Recently'}
+                    </span>
                 </div>
             </div>
 
-            {job.status === 'auto-applied' && (
+            {job.status === 'applied' && job.ai_summary && (
                 <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 mb-4">
                     <div className="flex items-center gap-2 text-sm text-purple-300 mb-2">
                         <CheckCircle className="w-4 h-4" />
                         <span className="font-medium">AI Application Summary</span>
                     </div>
-                    <p className="text-gray-400 text-sm">{job.aiSummary}</p>
+                    <p className="text-gray-400 text-sm">{job.ai_summary}</p>
                 </div>
             )}
 
-            {job.status === 'interview' && (
+            {job.status === 'interview' && job.interview_date && (
                 <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-4 mb-4">
                     <div className="flex items-center gap-2 text-sm text-pink-300 mb-2">
                         <Calendar className="w-4 h-4" />
-                        <span className="font-medium">Interview: {job.interviewDate}</span>
+                        <span className="font-medium">Interview: {new Date(job.interview_date).toLocaleDateString()}</span>
                     </div>
-                    <p className="text-gray-400 text-sm">{job.interviewType}</p>
+                    <p className="text-gray-400 text-sm">{job.interview_type || 'Interview scheduled'}</p>
                 </div>
             )}
 
             {job.status === 'rejected' && (
                 <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                    <p className="text-gray-400 text-sm">{job.message}</p>
+                    <p className="text-gray-400 text-sm">{job.rejection_reason || 'Application was not selected for this role.'}</p>
                 </div>
             )}
 
@@ -427,6 +620,119 @@ function AutoAppliedCard({ job, onView }) {
                         View Application
                     </button>
                 )}
+                <button className="btn-icon px-4 rounded-xl">
+                    <Eye className="w-5 h-5" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function ApplicationCard({ application, onView }) {
+    const colors = generateCompanyColors(application.company || application.job_title);
+    
+    const statusConfig = {
+        'pending': { color: 'text-yellow-400', bg: 'bg-yellow-500/10', label: 'Pending' },
+        'reviewed': { color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Under Review' },
+        'interview': { color: 'text-pink-400', bg: 'bg-pink-500/10', label: 'Interview' },
+        'rejected': { color: 'text-gray-400', bg: 'bg-gray-500/10', label: 'Rejected' },
+        'accepted': { color: 'text-green-400', bg: 'bg-green-500/10', label: 'Accepted' }
+    };
+    
+    const config = statusConfig[application.status] || statusConfig['pending'];
+
+    return (
+        <div 
+            className="glass-card rounded-2xl p-6 cursor-pointer"
+            onClick={onView}
+        >
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex gap-4">
+                    <div 
+                        className="w-14 h-14 rounded-xl flex items-center justify-center"
+                        style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
+                    >
+                        <span className="text-2xl font-bold text-white">
+                            {(application.company || application.job_title || 'J')[0]}
+                        </span>
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-lg">{application.job_title || 'Job Title'}</h3>
+                        <div className="text-sm text-gray-400">
+                            {application.company || 'Company'} • {application.location || 'Remote'}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
+                        {config.label}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                        Applied {application.applied_at ? new Date(application.applied_at).toLocaleDateString() : 'Recently'}
+                    </span>
+                </div>
+            </div>
+            
+            <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
+                <button className="btn-icon flex-1 py-2.5 rounded-xl text-sm font-medium border border-white/10">
+                    View Details
+                </button>
+                <button className="btn-icon px-4 rounded-xl">
+                    <ExternalLink className="w-5 h-5" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function InterviewCard({ application, onView }) {
+    const colors = generateCompanyColors(application.company || application.job_title);
+
+    return (
+        <div 
+            className="glass-card rounded-2xl p-6 border-l-4 border-l-pink-500 cursor-pointer"
+            onClick={onView}
+        >
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex gap-4">
+                    <div 
+                        className="w-14 h-14 rounded-xl flex items-center justify-center"
+                        style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})` }}
+                    >
+                        <span className="text-2xl font-bold text-white">
+                            {(application.company || application.job_title || 'J')[0]}
+                        </span>
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-lg">{application.job_title || 'Job Title'}</h3>
+                        <div className="text-sm text-gray-400">
+                            {application.company || 'Company'} • {application.location || 'Remote'}
+                        </div>
+                    </div>
+                </div>
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-pink-500/10 text-pink-400">
+                    Interview Scheduled
+                </span>
+            </div>
+
+            <div className="bg-pink-500/10 border border-pink-500/20 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-2 text-sm text-pink-300 mb-2">
+                    <Calendar className="w-4 h-4" />
+                    <span className="font-medium">
+                        {application.interview_date 
+                            ? new Date(application.interview_date).toLocaleString()
+                            : 'Date TBD'}
+                    </span>
+                </div>
+                <p className="text-gray-400 text-sm">
+                    {application.interview_type || 'Interview'} • {application.interview_notes || 'Prepare your talking points'}
+                </p>
+            </div>
+            
+            <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
+                <button className="btn-primary flex-1 py-2.5 rounded-xl text-sm font-medium">
+                    Prepare for Interview
+                </button>
                 <button className="btn-icon px-4 rounded-xl">
                     <Eye className="w-5 h-5" />
                 </button>

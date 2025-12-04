@@ -756,3 +756,190 @@
     padding: 0 0.5rem;
     color: #6b7280;
 }
+
+/* Sources Info */
+.sourcesInfo {
+    color: #6b7280;
+    font-weight: 400;
+}
+
+/* Error Card */
+.errorCard {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    color: #fca5a5;
+}
+
+.errorTitle {
+    font-weight: 600;
+    color: #f87171;
+    margin-bottom: 0.25rem;
+}
+
+.errorMessage {
+    font-size: 0.875rem;
+    color: #fca5a5;
+}
+
+.retryBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 8px;
+    color: #f87171;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.retryBtn:hover {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+/* Loading Grid */
+.loadingGrid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .loadingGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Skeleton Card */
+.skeletonCard {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+}
+
+.skeletonHeader {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.skeletonLogo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeletonText {
+    flex: 1;
+}
+
+.skeletonTitle {
+    height: 24px;
+    width: 70%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    margin-bottom: 0.5rem;
+}
+
+.skeletonCompany {
+    height: 16px;
+    width: 40%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeletonDescription {
+    height: 40px;
+    width: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    margin-bottom: 1rem;
+}
+
+.skeletonTags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.skeletonTag {
+    height: 24px;
+    width: 60px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.emptyState h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.emptyState p {
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+}
+
+.btnSecondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btnSecondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btnPrimary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
