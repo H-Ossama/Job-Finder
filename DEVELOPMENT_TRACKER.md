@@ -27,6 +27,7 @@
 ## ✅ Features Completed
 
 ### Auto-Apply System (December 2025)
+
 - **Real Auto-Apply API** (`/api/jobs/apply`) - Handles job applications with AI cover letter generation
 - **Batch Auto-Apply** (`/api/jobs/auto-apply`) - Automatically finds and applies to matching jobs
 - **AI Cover Letters** - Generates personalized cover letters using OpenRouter/Claude
@@ -34,6 +35,29 @@
 - **Auto-Apply Modal** - UI for configuring and running batch auto-apply
 - **Quick Apply Button** - One-click apply with cover letter generation
 - **Settings Integration** - Save auto-apply preferences (min match score, daily limit)
+
+### Job Search to Applications Integration (December 2025)
+
+- **Job Save/Track API** (`/api/jobs/track`) - Save jobs from search to Applications page
+- **Optimistic UI Updates** - Instant visual feedback when saving jobs
+- **Duplicate Prevention** - Prevents saving the same job twice
+- **External Job ID Support** - Added `external_job_id` column for tracking jobs from external sources
+- **PageLoader Fix** - Prevents loading animation from triggering when clicking buttons inside links
+
+### Notifications System (December 2025)
+
+- **Real-time Notifications** - Database-backed notification system
+- **Notification Types** - Job matches, application updates, interview reminders, AI suggestions
+- **Mark as Read** - Individual and bulk mark-as-read functionality
+- **Auto-refresh** - Polling every 60 seconds for new notifications
+- **Custom Header** - Notifications page with tabs and filters
+
+### Analytics & Applications Pages (December 2025)
+
+- **Real Data Integration** - Analytics and Applications pages now use actual database data
+- **CRUD Operations** - Full create, read, update, delete for applications
+- **Simplified Queries** - Removed problematic table joins for stability
+- **Comprehensive Logging** - Added detailed server-side logging for debugging
 
 ## 🚧 Pending Pages
 
@@ -103,14 +127,6 @@
 | `/api/jobs/auto-apply` | POST | Run batch auto-apply process |
 | `/api/jobs/auto-apply` | GET | Get auto-apply status and settings |
 | `/api/preferences/general` | POST | Save auto-apply & notification settings |
-
----
-
-## 🔒 Security Updates
-
-| Date | Issue | Resolution |
-|------|-------|------------|
-| December 2025 | Hardcoded Gemini API key in `utils/ai/gemini.js` | Removed hardcoded key, now requires `GEMINI_API_KEY` env variable |
 
 ---
 
