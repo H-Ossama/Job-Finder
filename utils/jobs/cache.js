@@ -7,7 +7,9 @@ import { createClient } from '@/utils/supabase/server';
 
 // In-memory cache (for serverless environments)
 const memoryCache = new Map();
+const jobMemoryCache = new Map(); // Cache for individual jobs by ID
 const MEMORY_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+const JOB_MEMORY_CACHE_TTL = 60 * 60 * 1000; // 1 hour for individual jobs
 const DB_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 /**
@@ -22,7 +24,7 @@ export async function getCachedJobs(cacheKey) {
         return memoryCached;
     }
 
-    // Check database cache
+    // Check database cache (wrapped in try-catch for resilience)
     try {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -31,16 +33,24 @@ export async function getCachedJobs(cacheKey) {
             .eq('cache_key', cacheKey)
             .single();
 
-        if (error || !data) return null;
+        // Handle errors gracefully - table might not exist
+        if (error) {
+            // PGRST116 = no rows, PGRST205 = table doesn't exist - both are OK
+            return null;
+        }
+
+        if (!data) return null;
 
         // Check if cache is still valid
         const cacheAge = Date.now() - new Date(data.created_at).getTime();
         if (cacheAge > DB_CACHE_TTL) {
-            // Cache expired, delete it
-            await supabase
+            // Cache expired, delete it (don't await)
+            supabase
                 .from('job_search_cache')
                 .delete()
-                .eq('cache_key', cacheKey);
+                .eq('cache_key', cacheKey)
+                .then(() => {})
+                .catch(() => {});
             return null;
         }
 
@@ -49,7 +59,7 @@ export async function getCachedJobs(cacheKey) {
         
         return data.results;
     } catch (error) {
-        console.error('Error getting cached jobs:', error);
+        // Database errors shouldn't break the app
         return null;
     }
 }
@@ -60,15 +70,15 @@ export async function getCachedJobs(cacheKey) {
  * @param {Object} data - Data to cache
  */
 export async function cacheJobs(cacheKey, data) {
-    // Store in memory cache
+    // Store in memory cache (always works)
     setInMemoryCache(cacheKey, data);
 
-    // Store in database cache (async, don't wait)
+    // Store in database cache (async, don't wait, may fail if table doesn't exist)
     try {
         const supabase = await createClient();
         
         // Upsert to handle both insert and update
-        await supabase
+        const { error } = await supabase
             .from('job_search_cache')
             .upsert({
                 cache_key: cacheKey,
@@ -77,9 +87,13 @@ export async function cacheJobs(cacheKey, data) {
             }, {
                 onConflict: 'cache_key',
             });
+        
+        if (error && error.code !== 'PGRST205') {
+            // Only log non-table-missing errors
+        }
     } catch (error) {
         // Don't throw, caching failure shouldn't break the app
-        console.error('Error caching jobs:', error);
+        // Memory cache is still working
     }
 }
 
@@ -132,6 +146,14 @@ export async function cacheJob(job) {
 export async function cacheJobsBatch(jobs) {
     if (!jobs || jobs.length === 0) return;
     
+    // Always cache in memory first (this is fast and reliable)
+    for (const job of jobs) {
+        if (job.id) {
+            cacheJobInMemory(job.id, job);
+        }
+    }
+    
+    // Then try to cache in database (may fail if table doesn't exist)
     try {
         const supabase = await createClient();
         
@@ -169,17 +191,82 @@ export async function cacheJobsBatch(jobs) {
                 ignoreDuplicates: false,
             });
     } catch (error) {
-        console.error('Error batch caching jobs:', error);
+        // Database caching failed, but memory cache is still good
+        console.error('Error batch caching jobs to DB:', error.message);
     }
 }
 
 /**
+ * Cache a single job in memory
+ * @param {string} jobId - Job ID
+ * @param {Object} job - Job data
+ */
+export function cacheJobInMemory(jobId, job) {
+    // Limit cache size
+    if (jobMemoryCache.size > 500) {
+        // Remove oldest entries
+        const keysToDelete = Array.from(jobMemoryCache.keys()).slice(0, 100);
+        keysToDelete.forEach(k => jobMemoryCache.delete(k));
+    }
+    
+    jobMemoryCache.set(jobId, {
+        data: job,
+        timestamp: Date.now(),
+    });
+}
+
+/**
+ * Get a job from memory cache
+ * @param {string} jobId - Job ID
+ * @returns {Object|null} - Job data or null
+ */
+export function getJobFromMemoryCache(jobId) {
+    const cached = jobMemoryCache.get(jobId);
+    if (!cached) return null;
+    
+    if (Date.now() - cached.timestamp > JOB_MEMORY_CACHE_TTL) {
+        jobMemoryCache.delete(jobId);
+        return null;
+    }
+    
+    return cached.data;
+}
+
+/**
  * Get a cached job by ID from database
- * @param {string} jobId - Job ID (format: source_externalId)
+ * @param {string} jobId - Job ID (format: source_externalId or morocco_source_hash)
  * @returns {Promise<Object|null>} - Job data or null
  */
 export async function getCachedJobById(jobId) {
-    const [source, externalId] = jobId.split('_');
+    // Check memory cache first (fastest)
+    const memoryCached = getJobFromMemoryCache(jobId);
+    if (memoryCached) {
+        return memoryCached;
+    }
+    
+    // Handle Morocco jobs specially - they have format: morocco_source_hash
+    // e.g., morocco_emploi_abc123, morocco_rekrute_xyz789
+    let source, externalId;
+    
+    if (jobId.startsWith('morocco_')) {
+        // For Morocco jobs: morocco_source_hash
+        // source = "morocco_source" (e.g., "morocco_emploi")
+        // externalId = hash part
+        const parts = jobId.split('_');
+        if (parts.length >= 3) {
+            source = `${parts[0]}_${parts[1]}`; // e.g., "morocco_emploi"
+            externalId = parts.slice(2).join('_'); // The hash part
+        } else {
+            return null;
+        }
+    } else {
+        // Standard format: source_externalId
+        const underscoreIndex = jobId.indexOf('_');
+        if (underscoreIndex === -1) return null;
+        
+        source = jobId.substring(0, underscoreIndex);
+        externalId = jobId.substring(underscoreIndex + 1);
+    }
     
     if (!source || !externalId) return null;
     
@@ -193,10 +280,15 @@ export async function getCachedJobById(jobId) {
             .eq('external_id', externalId)
             .single();
         
-        if (error || !data) return null;
+        if (error) {
+            // PGRST116 = no rows, PGRST205 = table doesn't exist - both are OK
+            return null;
+        }
+        
+        if (!data) return null;
         
         // Convert database record back to normalized format
-        return {
+        const job = {
             id: `${data.source}_${data.external_id}`,
             externalId: data.external_id,
             source: data.source,
@@ -218,13 +310,18 @@ export async function getCachedJobById(jobId) {
             benefits: data.benefits || [],
             skills: data.skills || [],
             applyUrl: data.apply_url,
+            url: data.apply_url, // Alias for applyUrl
             postedAt: data.posted_at,
             expiresAt: data.expires_at,
             tags: generateTagsFromCache(data),
             rawData: data.raw_data,
         };
+        
+        // Store in memory cache for faster subsequent access
+        cacheJobInMemory(jobId, job);
+        
+        return job;
     } catch (error) {
-        console.error('Error getting cached job by ID:', error);
         return null;
     }
 }
@@ -244,6 +341,58 @@ export async function clearExpiredCache() {
     } catch (error) {
         console.error('Error clearing expired cache:', error);
     }
+}
+
+/**
+ * Clear all search cache (both memory and database)
+ * @returns {Promise<Object>} - Result of cache clearing
+ */
+export async function clearAllSearchCache() {
+    const results = {
+        memoryCleared: false,
+        dbCleared: false,
+        memoryCacheSize: memoryCache.size,
+        jobMemoryCacheSize: jobMemoryCache.size,
+    };
+    
+    try {
+        // Clear memory caches
+        memoryCache.clear();
+        results.memoryCleared = true;
+        
+        // Clear database cache
+        const supabase = await createClient();
+        const { error } = await supabase
+            .from('job_search_cache')
+            .delete()
+            .neq('cache_key', ''); // Delete all rows
+        
+        if (!error) {
+            results.dbCleared = true;
+        }
+    } catch (error) {
+        console.error('Error clearing all cache:', error);
+    }
+    
+    return results;
+}
+
+/**
+ * Clear job memory cache only
+ */
+export function clearJobMemoryCache() {
+    const size = jobMemoryCache.size;
+    jobMemoryCache.clear();
+    return { cleared: true, entriesRemoved: size };
+}
+
+/**
+ * Clear search memory cache only  
+ */
+export function clearSearchMemoryCache() {
+    const size = memoryCache.size;
+    memoryCache.clear();
+    return { cleared: true, entriesRemoved: size };
 }
 
 // Memory cache helpers

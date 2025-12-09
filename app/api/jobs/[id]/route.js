@@ -7,7 +7,8 @@
 
 import { NextResponse } from 'next/server';
 import { getCachedJobById } from '@/utils/jobs/cache';
-import { getJobById } from '@/utils/jobs';
+import { getJobById, fetchJobDirectly } from '@/utils/jobs';
+import { detectSmartTips } from '@/utils/jobs/smartTipDetector';
 
 export async function GET(request, { params }) {
     try {
@@ -20,19 +21,49 @@ export async function GET(request, { params }) {
             }, { status: 400 });
         }
 
+        // Decode the job ID (it may be URL encoded, especially for JSearch IDs with special chars)
+        const jobId = decodeURIComponent(id);
+
         // Try to get from cache first
-        let job = await getCachedJobById(id);
+        let job = await getCachedJobById(jobId);
         
         // If not in cache, fetch from provider
         if (!job) {
-            job = await getJobById(id);
+            job = await getJobById(jobId);
+        }
+        
+        // If still no job, try to fetch directly from the source provider
+        if (!job) {
+            job = await fetchJobDirectly(jobId);
+        }
+        
+        // If still no job, return 404 error
+        if (!job) {
+            // Parse the job ID to get source for better error message
+            const underscoreIndex = jobId.indexOf('_');
+            const source = underscoreIndex !== -1 ? jobId.substring(0, underscoreIndex) : 'unknown';
             
-            if (!job) {
-                return NextResponse.json({
-                    success: false,
-                    error: 'Job not found',
-                }, { status: 404 });
-            }
+            // Provide more specific message for Morocco jobs
+            const isMoroccoJob = source === 'morocco' || jobId.startsWith('morocco_');
+            const sourceDisplayName = isMoroccoJob 
+                ? 'Morocco job sites' 
+                : source === 'remoteok' ? 'Remote OK'
+                : source === 'adzuna' ? 'Adzuna'
+                : source === 'jsearch' ? 'JSearch'
+                : source === 'themuse' ? 'The Muse'
+                : source;
+            
+            const message = isMoroccoJob
+                ? 'This job from Morocco may no longer be available. Morocco jobs are scraped from external sites and may expire quickly. Try searching again to find fresh listings.'
+                : `This job from ${sourceDisplayName} may no longer be available or has expired. Try searching for similar positions.`;
+            
+            return NextResponse.json({
+                success: false,
+                error: 'Job not found',
+                message,
+                source: sourceDisplayName,
+                isMoroccoJob,
+            }, { status: 404 });
         }
 
         // Generate additional data for the job details page
@@ -40,7 +71,7 @@ export async function GET(request, { params }) {
 
         return NextResponse.json({
             success: true,
-            data: enrichedJob,
+            data: { job: enrichedJob },
         });
 
     } catch (error) {
@@ -61,6 +92,12 @@ function enrichJobDetails(job) {
     // Generate company colors based on company name
     const companyColors = generateCompanyColors(job.company);
     
+    // Sanitize HTML in description
+    const sanitizedDescription = sanitizeJobDescription(job.description);
+    
+    // Detect smart tips (hidden keywords for application)
+    const smartTips = detectSmartTips(job.description);
+    
     // Extract requirements from description if not present
     const requirements = job.requirements?.length > 0 
         ? job.requirements 
@@ -80,6 +117,7 @@ function enrichJobDetails(job) {
     
     return {
         ...job,
+        description: sanitizedDescription, // Use sanitized description
         companyLogo: job.companyLogo || job.company?.[0]?.toUpperCase(),
         companyColors,
         companyDescription: `${job.company} is a company in the ${job.industry || 'technology'} industry.`,
@@ -89,9 +127,11 @@ function enrichJobDetails(job) {
         industry: job.industry || 'Technology',
         locationType: job.locationType || 'onsite',
         jobType: job.jobType || 'full-time',
-        experience: formatExperience(job.experienceLevel),
+        experience: formatExperience(job.experienceLevel, job.description, job.title),
+        experienceLevel: formatExperience(job.experienceLevel, job.description, job.title),
         matchScore,
-        postedAt: formatPostedDate(job.postedAt),
+        postedAt: job.postedAt, // Keep original ISO string for client-side formatting
+        postedAtFormatted: formatPostedDate(job.postedAt), // Pre-formatted for display
         responsibilities,
         requirements: requirements.slice(0, 6),
         niceToHave: niceToHave.slice(0, 4),
@@ -99,6 +139,9 @@ function enrichJobDetails(job) {
         skills: formatSkills(job.skills || []),
         similarJobs: [], // Would be populated from search
         tags: generateTags(job),
+        url: job.applyUrl || job.url || '#', // Ensure url is available
+        applyUrl: job.applyUrl || job.url || '#',
+        smartTips: smartTips.found ? smartTips.tips : [], // Add smart tips
     };
 }
 
@@ -259,15 +302,108 @@ function calculateMatchScore(job) {
     return Math.floor(Math.random() * 30) + 70; // 70-100
 }
 
-function formatExperience(level) {
+function formatExperience(level, description = '', title = '') {
+    const descLower = (description || '').toLowerCase();
+    const titleLower = (title || '').toLowerCase();
+    const combinedText = `${titleLower} ${descLower}`;
+    
+    // FIRST: Try to extract explicit year requirements from description
+    // This takes PRIORITY over any "entry level" text that might appear
+    const yearPatterns = [
+        /(\d+)\s*(?:to|-)\s*(\d+)\s*years?/gi,        // 3-5 years, 3 to 5 years, 8-10 years
+        /(\d+)\s*\+\s*years?/gi,                       // 5+ years
+        /minimum\s*(?:of\s*)?(\d+)\s*years?/gi,       // minimum 5 years
+        /at\s*least\s*(\d+)\s*years?/gi,              // at least 5 years
+        /(\d+)\s*years?\s*(?:of\s*)?(?:relevant\s*)?experience/gi,  // 5 years of experience
+        /experience[:\s]+(\d+)\+?\s*years?/gi,        // experience: 5+ years
+        /experience\s*\(?in\s*yrs?\)?[:\s]*(\d+)\s*(?:to|-)\s*(\d+)/gi  // Experience (in Yrs) 8-10
+    ];
+    
+    let maxYears = 0;
+    let yearResult = null;
+    
+    for (const pattern of yearPatterns) {
+        const matches = [...combinedText.matchAll(pattern)];
+        for (const match of matches) {
+            let years;
+            if (match[2]) {
+                // Range like 3-5 years
+                years = parseInt(match[1]);
+                if (years > maxYears && years <= 20) {
+                    maxYears = years;
+                    yearResult = `${match[1]}-${match[2]} years`;
+                }
+            } else if (match[1]) {
+                years = parseInt(match[1]);
+                if (years > maxYears && years <= 20) {
+                    maxYears = years;
+                    yearResult = `${years}+ years`;
+                }
+            }
+        }
+    }
+    
+    // If we found explicit years > 0, return that (NOT entry level)
+    if (maxYears > 0 && yearResult) {
+        return yearResult;
+    }
+    
+    // ONLY if no years found, check for explicit "no experience" indicators
+    const noExperiencePatterns = [
+        /no\s*experience\s*(needed|required|necessary)/i,
+        /experience\s*not\s*(needed|required|necessary)/i,
+        /without\s*experience/i,
+        /no\s*prior\s*experience/i,
+        /beginners?\s*welcome/i,
+        /open\s*to\s*(all|beginners?|freshers?)/i,
+        /anyone\s*can\s*apply/i,
+        /freshers?\s*(welcome|encouraged)/i,
+        /will\s*train/i,
+        /training\s*provided/i,
+        /0\s*years?\s*(of\s*)?experience/i,
+        /zero\s*(years?)?\s*(of\s*)?experience/i
+    ];
+    
+    for (const pattern of noExperiencePatterns) {
+        if (pattern.test(combinedText)) {
+            return 'No experience required';
+        }
+    }
+    
+    // Check title for entry-level indicators ONLY if no years were found
+    if (titleLower.match(/\b(entry[\s-]?level|junior|jr\.?|intern|trainee|graduate|fresher|beginner)\b/i)) {
+        return 'Entry Level';
+    }
+    
+    // Check experience level mapping from metadata
     const mapping = {
-        'entry': '0-2 years',
+        'entry': 'Entry Level',
+        'entry-level': 'Entry Level',
+        'entry_level': 'Entry Level',
+        'junior': 'Entry Level',
         'mid': '3-5 years',
+        'mid-level': '3-5 years',
+        'intermediate': '3-5 years',
         'senior': '5+ years',
+        'senior-level': '5+ years',
         'lead': '7+ years',
+        'principal': '8+ years',
+        'staff': '8+ years',
         'executive': '10+ years',
     };
-    return mapping[level] || '3+ years';
+    
+    const normalizedLevel = (level || '').toLowerCase().replace(/[_]/g, '-');
+    if (mapping[normalizedLevel]) {
+        return mapping[normalizedLevel];
+    }
+    
+    // If level is specified but not in mapping, use it directly
+    if (level) {
+        return level;
+    }
+    
+    // Default: Don't assume experience - leave as not specified
+    return 'Not specified';
 }
 
 function formatPostedDate(dateStr) {
@@ -298,9 +434,98 @@ function generateTags(job) {
     if (job.salary) {
         tags.push(job.salary);
     }
-    if (job.experienceLevel) {
-        tags.push(formatExperience(job.experienceLevel) + ' exp');
+    
+    // Generate experience tag using full context
+    const experienceTag = formatExperience(job.experienceLevel, job.description, job.title);
+    if (experienceTag && experienceTag !== 'Not specified') {
+        // Don't add "exp" suffix if it already says "No experience required" or "Entry Level"
+        if (experienceTag.includes('experience') || experienceTag === 'Entry Level') {
+            tags.push(experienceTag);
+        } else {
+            tags.push(experienceTag + ' exp');
+        }
     }
     
     return tags;
+}
+
+/**
+ * Sanitize job description HTML
+ * Fixes malformed HTML, removes orphaned closing tags, and ensures proper structure
+ */
+function sanitizeJobDescription(html) {
+    if (!html) return '';
+    
+    // Remove orphaned closing tags at the beginning
+    let sanitized = html.replace(/^(\s*<\/[a-zA-Z]+>\s*)+/, '');
+    
+    // Remove orphaned opening tags at the end
+    sanitized = sanitized.replace(/(\s*<[a-zA-Z]+[^>]*>\s*)+$/, '');
+    
+    // Fix double tags like </li></ul> at start
+    sanitized = sanitized.replace(/^<\/li>/gi, '');
+    sanitized = sanitized.replace(/^<\/ul>/gi, '');
+    sanitized = sanitized.replace(/^<\/p>/gi, '');
+    sanitized = sanitized.replace(/^<\/div>/gi, '');
+    
+    // Ensure lists are properly wrapped
+    // Check if content starts with <li> without <ul>
+    if (sanitized.match(/^\s*<li>/i) && !sanitized.match(/^\s*<ul>/i)) {
+        sanitized = '<ul>' + sanitized;
+    }
+    
+    // Convert <br> tags in succession to proper paragraph breaks
+    sanitized = sanitized.replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '</p><p>');
+    
+    // Ensure no empty paragraphs
+    sanitized = sanitized.replace(/<p>\s*<\/p>/gi, '');
+    sanitized = sanitized.replace(/<p>\s*<br\s*\/?>\s*<\/p>/gi, '');
+    
+    // Fix unclosed bold/strong tags
+    const boldCount = (sanitized.match(/<b>/gi) || []).length;
+    const boldCloseCount = (sanitized.match(/<\/b>/gi) || []).length;
+    if (boldCount > boldCloseCount) {
+        for (let i = 0; i < boldCount - boldCloseCount; i++) {
+            sanitized += '</b>';
+        }
+    }
+    
+    const strongCount = (sanitized.match(/<strong>/gi) || []).length;
+    const strongCloseCount = (sanitized.match(/<\/strong>/gi) || []).length;
+    if (strongCount > strongCloseCount) {
+        for (let i = 0; i < strongCount - strongCloseCount; i++) {
+            sanitized += '</strong>';
+        }
+    }
+    
+    // Ensure lists are properly closed
+    const ulCount = (sanitized.match(/<ul>/gi) || []).length;
+    const ulCloseCount = (sanitized.match(/<\/ul>/gi) || []).length;
+    if (ulCount > ulCloseCount) {
+        for (let i = 0; i < ulCount - ulCloseCount; i++) {
+            sanitized += '</ul>';
+        }
+    }
+    
+    const liCount = (sanitized.match(/<li>/gi) || []).length;
+    const liCloseCount = (sanitized.match(/<\/li>/gi) || []).length;
+    if (liCount > liCloseCount) {
+        for (let i = 0; i < liCount - liCloseCount; i++) {
+            sanitized += '</li>';
+        }
+    }
+    
+    // Wrap plain text sections that look like headers (bold text on its own line)
+    sanitized = sanitized.replace(/<p><br><\/p><b>([^<]+)<\/b>/gi, '</p><h4>$1</h4><p>');
+    sanitized = sanitized.replace(/<p>\s*<\/p>\s*<b>([^<]+)<\/b>/gi, '<h4>$1</h4>');
+    
+    // Clean up multiple spaces
+    sanitized = sanitized.replace(/\s+/g, ' ').trim();
+    
+    // Wrap in a div if it doesn't start with a block element
+    if (!sanitized.match(/^\s*<(?:div|p|ul|ol|h[1-6]|section|article)/i)) {
+        sanitized = '<div>' + sanitized + '</div>';
+    }
+    
+    return sanitized;
 }

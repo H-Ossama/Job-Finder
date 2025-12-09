@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
     Search,
     Zap,
@@ -12,9 +13,17 @@ import {
     EyeOff,
     Download,
     Trash2,
-    AlertTriangle
+    AlertTriangle,
+    MapPin,
+    Briefcase,
+    DollarSign,
+    Loader2,
+    Info,
+    ChevronDown,
+    Save
 } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
+import LocationSelector from '@/components/LocationSelector';
 
 const themes = [
     { id: 'purple', name: 'Purple Haze', description: 'Default theme', colors: ['#667eea', '#764ba2'] },
@@ -23,24 +32,86 @@ const themes = [
     { id: 'sunset', name: 'Sunset', description: 'Warm & vibrant', colors: ['#f43f5e', '#fb923c'] }
 ];
 
-export default function SettingsContent({ user, preferences, cvs }) {
+const experienceLevelOptions = [
+    { id: 'entry', label: 'Entry Level', description: '0-2 years' },
+    { id: 'mid', label: 'Mid Level', description: '3-5 years' },
+    { id: 'senior', label: 'Senior', description: '5-10 years' },
+    { id: 'lead', label: 'Lead/Principal', description: '10+ years' },
+];
+
+const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'MAD', symbol: 'د.م.', name: 'Moroccan Dirham' },
+    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
+    { code: 'SAR', symbol: '﷼', name: 'Saudi Riyal' },
+    { code: 'EGP', symbol: 'E£', name: 'Egyptian Pound' },
+    { code: 'TRY', symbol: '₺', name: 'Turkish Lira' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+    { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+    { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit' },
+    { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah' },
+    { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+    { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
+    { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
+    { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling' },
+];
+
+export default function SettingsContent({ user, preferences, jobPreferences, cvs }) {
     const { theme: activeTheme, setTheme } = useTheme();
-    const [settings, setSettings] = useState({
-        // Job Search
-        jobTitles: preferences?.job_titles || 'Senior Frontend Engineer, Full Stack Developer, Staff Engineer',
-        minSalary: preferences?.min_salary || '$150,000',
-        maxSalary: preferences?.max_salary || '$300,000',
-        locations: preferences?.locations || 'San Francisco, CA; New York, NY; Remote',
+    const router = useRouter();
+    
+    // Job Search Preferences State
+    const [jobSearchPrefs, setJobSearchPrefs] = useState({
+        jobTitles: jobPreferences?.desired_titles?.join(', ') || '',
+        location: {
+            country: jobPreferences?.desired_countries?.[0] || '',
+            city: '', // Will be parsed from desired_locations
+            useAutoLocation: false,
+            isRemote: jobPreferences?.job_types?.includes('remote') || false,
+        },
+        salaryMin: jobPreferences?.salary_min ? `${jobPreferences.salary_min}` : '',
+        salaryMax: jobPreferences?.salary_max ? `${jobPreferences.salary_max}` : '',
+        salaryCurrency: jobPreferences?.salary_currency || 'USD',
         workType: {
-            remote: preferences?.work_type?.includes('remote') ?? true,
-            hybrid: preferences?.work_type?.includes('hybrid') ?? true,
-            onsite: preferences?.work_type?.includes('onsite') ?? false,
+            remote: jobPreferences?.job_types?.includes('remote') ?? true,
+            hybrid: jobPreferences?.job_types?.includes('hybrid') ?? false,
+            onsite: jobPreferences?.job_types?.includes('onsite') ?? false,
         },
         employmentType: {
-            fulltime: preferences?.employment_type?.includes('fulltime') ?? true,
-            contract: preferences?.employment_type?.includes('contract') ?? false,
-            parttime: preferences?.employment_type?.includes('parttime') ?? false,
+            fulltime: jobPreferences?.job_types?.includes('full-time') ?? true,
+            contract: jobPreferences?.job_types?.includes('contract') ?? false,
+            parttime: jobPreferences?.job_types?.includes('part-time') ?? false,
         },
+        experienceLevels: jobPreferences?.experience_levels || [],
+        skills: jobPreferences?.skills?.join(', ') || '',
+    });
+
+    // Parse city from desired_locations on mount
+    useEffect(() => {
+        if (jobPreferences?.desired_locations?.[0]) {
+            const locationParts = jobPreferences.desired_locations[0].split(', ');
+            if (locationParts.length > 1) {
+                setJobSearchPrefs(prev => ({
+                    ...prev,
+                    location: {
+                        ...prev.location,
+                        city: locationParts[0],
+                    }
+                }));
+            }
+        }
+    }, [jobPreferences]);
+
+    // General settings state
+    const [settings, setSettings] = useState({
         // AI Auto-Apply
         autoApplyEnabled: preferences?.auto_apply_enabled ?? true,
         minMatchScore: preferences?.min_match_score || '85',
@@ -59,6 +130,7 @@ export default function SettingsContent({ user, preferences, cvs }) {
     });
 
     const [saving, setSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState(null);
 
     const handleThemeChange = (themeId) => {
         setTheme(themeId);
@@ -72,7 +144,7 @@ export default function SettingsContent({ user, preferences, cvs }) {
     };
 
     const handleWorkTypeToggle = (type) => {
-        setSettings(prev => ({
+        setJobSearchPrefs(prev => ({
             ...prev,
             workType: {
                 ...prev.workType,
@@ -82,12 +154,21 @@ export default function SettingsContent({ user, preferences, cvs }) {
     };
 
     const handleEmploymentTypeToggle = (type) => {
-        setSettings(prev => ({
+        setJobSearchPrefs(prev => ({
             ...prev,
             employmentType: {
                 ...prev.employmentType,
                 [type]: !prev.employmentType[type]
             }
+        }));
+    };
+
+    const handleExperienceLevelToggle = (levelId) => {
+        setJobSearchPrefs(prev => ({
+            ...prev,
+            experienceLevels: prev.experienceLevels.includes(levelId)
+                ? prev.experienceLevels.filter(l => l !== levelId)
+                : [...prev.experienceLevels, levelId]
         }));
     };
 
@@ -98,11 +179,106 @@ export default function SettingsContent({ user, preferences, cvs }) {
         }));
     };
 
+    const handleJobPrefChange = (e) => {
+        setJobSearchPrefs(prev => ({
+            ...prev,
+            [e.target.name]: e.target.value
+        }));
+    };
+
+    const handleLocationChange = (newLocation) => {
+        setJobSearchPrefs(prev => ({
+            ...prev,
+            location: newLocation,
+            workType: {
+                ...prev.workType,
+                remote: newLocation.isRemote,
+            }
+        }));
+    };
+
     const handleSave = async () => {
         setSaving(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setSaving(false);
+        setSaveMessage(null);
+        
+        try {
+            // Build job types array
+            const jobTypes = [];
+            if (jobSearchPrefs.workType.remote) jobTypes.push('remote');
+            if (jobSearchPrefs.workType.hybrid) jobTypes.push('hybrid');
+            if (jobSearchPrefs.workType.onsite) jobTypes.push('onsite');
+            if (jobSearchPrefs.employmentType.fulltime) jobTypes.push('full-time');
+            if (jobSearchPrefs.employmentType.contract) jobTypes.push('contract');
+            if (jobSearchPrefs.employmentType.parttime) jobTypes.push('part-time');
+
+            // Save job search preferences
+            const jobSearchResponse = await fetch('/api/preferences/job-search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    desiredTitles: jobSearchPrefs.jobTitles.split(',').map(t => t.trim()).filter(Boolean),
+                    preferredCountry: jobSearchPrefs.location.country,
+                    preferredCity: jobSearchPrefs.location.city,
+                    useAutoLocation: jobSearchPrefs.location.useAutoLocation,
+                    salaryMin: jobSearchPrefs.salaryMin,
+                    salaryMax: jobSearchPrefs.salaryMax,
+                    salaryCurrency: jobSearchPrefs.salaryCurrency,
+                    jobTypes,
+                    experienceLevels: jobSearchPrefs.experienceLevels,
+                    skills: jobSearchPrefs.skills.split(',').map(s => s.trim()).filter(Boolean),
+                }),
+            });
+
+            const jobSearchData = await jobSearchResponse.json();
+            
+            if (!jobSearchData.success) {
+                throw new Error(jobSearchData.error || 'Failed to save job search preferences');
+            }
+
+            // Save general preferences (auto-apply, notifications, privacy)
+            const generalResponse = await fetch('/api/preferences/general', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    // Auto-apply settings
+                    autoApplyEnabled: settings.autoApplyEnabled,
+                    minMatchScore: settings.minMatchScore,
+                    dailyLimit: settings.dailyLimit,
+                    generateCoverLetters: settings.generateCoverLetters,
+                    defaultResumeId: settings.defaultResumeId || null,
+                    // Notification settings
+                    notifyNewMatches: settings.notifyNewMatches,
+                    notifyApplicationUpdates: settings.notifyApplicationUpdates,
+                    notifyProfileViews: settings.notifyProfileViews,
+                    notifyWeeklySummary: settings.notifyWeeklySummary,
+                    // Privacy settings
+                    profileVisible: settings.profileVisible,
+                    showSalary: settings.showSalary,
+                    allowDataCollection: settings.allowDataCollection,
+                }),
+            });
+
+            const generalData = await generalResponse.json();
+
+            if (!generalData.success) {
+                throw new Error(generalData.error || 'Failed to save general preferences');
+            }
+
+            setSaveMessage({ type: 'success', text: 'All preferences saved successfully!' });
+            // Refresh the router cache so other pages see the updated preferences
+            router.refresh();
+        } catch (error) {
+            console.error('Save error:', error);
+            setSaveMessage({ type: 'error', text: error.message || 'Failed to save preferences' });
+        } finally {
+            setSaving(false);
+            setTimeout(() => setSaveMessage(null), 5000);
+        }
     };
+
+    // Check if job preferences are complete
+    const isJobPrefsComplete = jobSearchPrefs.jobTitles && 
+        (jobSearchPrefs.location.country || jobSearchPrefs.location.isRemote);
 
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
@@ -112,124 +288,187 @@ export default function SettingsContent({ user, preferences, cvs }) {
                 <p className="text-gray-400">Configure your job search preferences and AI settings.</p>
             </header>
 
-            {/* Job Search Preferences */}
-            <div className="glass-card-static rounded-2xl p-8">
-                <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
-                    <Search className="w-5 h-5" style={{ color: 'var(--accent-color)' }} />
-                    Job Search Preferences
-                </h3>
+            {/* Save Message */}
+            {saveMessage && (
+                <div className={`p-4 rounded-xl flex items-center gap-3 ${
+                    saveMessage.type === 'success' 
+                        ? 'bg-green-500/20 border border-green-500/30 text-green-300'
+                        : 'bg-red-500/20 border border-red-500/30 text-red-300'
+                }`}>
+                    {saveMessage.type === 'success' ? (
+                        <CheckCircle className="w-5 h-5" />
+                    ) : (
+                        <AlertTriangle className="w-5 h-5" />
+                    )}
+                    {saveMessage.text}
+                </div>
+            )}
+
+            {/* Job Search Preferences - Main Section */}
+            <div className="glass-card-static rounded-2xl p-8 border-2 border-indigo-500/30 bg-indigo-500/5">
+                <div className="flex items-start justify-between mb-6">
+                    <div>
+                        <h3 className="font-bold text-lg flex items-center gap-2">
+                            <Search className="w-5 h-5" style={{ color: 'var(--accent-color)' }} />
+                            Job Search Preferences
+                        </h3>
+                        <p className="text-sm text-gray-400 mt-1">
+                            These preferences are used to show you relevant jobs automatically
+                        </p>
+                    </div>
+                    {!isJobPrefsComplete && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-lg text-amber-300 text-sm">
+                            <Info className="w-4 h-4" />
+                            Please complete
+                        </div>
+                    )}
+                </div>
                 
                 <div className="space-y-6">
+                    {/* Desired Job Titles */}
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">Desired Job Titles</label>
+                        <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
+                            <Briefcase className="w-4 h-4" />
+                            Desired Job Titles *
+                        </label>
                         <input 
                             type="text" 
                             name="jobTitles"
-                            value={settings.jobTitles}
-                            onChange={handleChange}
+                            value={jobSearchPrefs.jobTitles}
+                            onChange={handleJobPrefChange}
+                            placeholder="e.g., Software Engineer, Full Stack Developer, Frontend Developer"
                             className="form-input w-full"
                         />
                         <p className="text-xs text-gray-500 mt-1">Separate multiple titles with commas</p>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm text-gray-400 mb-2">Minimum Salary</label>
-                            <input 
-                                type="text" 
-                                name="minSalary"
-                                value={settings.minSalary}
-                                onChange={handleChange}
-                                className="form-input w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm text-gray-400 mb-2">Maximum Salary</label>
-                            <input 
-                                type="text" 
-                                name="maxSalary"
-                                value={settings.maxSalary}
-                                onChange={handleChange}
-                                className="form-input w-full"
-                            />
-                        </div>
-                    </div>
 
+                    {/* Location Selector */}
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">Preferred Locations</label>
-                        <input 
-                            type="text" 
-                            name="locations"
-                            value={settings.locations}
-                            onChange={handleChange}
-                            className="form-input w-full"
+                        <LocationSelector
+                            value={jobSearchPrefs.location}
+                            onChange={handleLocationChange}
+                            label={
+                                <span className="flex items-center gap-2">
+                                    <MapPin className="w-4 h-4" />
+                                    Preferred Location *
+                                </span>
+                            }
+                            showRemoteOption={true}
+                            showAutoDetect={true}
                         />
                     </div>
+                    
+                    {/* Salary Range */}
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2">
+                            <DollarSign className="w-4 h-4" />
+                            Expected Salary Range
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <select
+                                    name="salaryCurrency"
+                                    value={jobSearchPrefs.salaryCurrency}
+                                    onChange={handleJobPrefChange}
+                                    className="form-input w-full"
+                                >
+                                    {currencies.map(c => (
+                                        <option key={c.code} value={c.code}>
+                                            {c.symbol} {c.code}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <input 
+                                    type="text" 
+                                    name="salaryMin"
+                                    value={jobSearchPrefs.salaryMin}
+                                    onChange={handleJobPrefChange}
+                                    placeholder="Min (e.g., 50000)"
+                                    className="form-input w-full"
+                                />
+                            </div>
+                            <div>
+                                <input 
+                                    type="text" 
+                                    name="salaryMax"
+                                    value={jobSearchPrefs.salaryMax}
+                                    onChange={handleJobPrefChange}
+                                    placeholder="Max (e.g., 150000)"
+                                    className="form-input w-full"
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Annual salary in your preferred currency</p>
+                    </div>
 
+                    {/* Work Type */}
                     <div>
                         <label className="block text-sm text-gray-400 mb-3">Work Type</label>
                         <div className="flex flex-wrap gap-3">
                             <label 
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition ${
-                                    settings.workType.remote 
+                                    jobSearchPrefs.workType.remote 
                                         ? 'bg-indigo-500/20 border border-indigo-500/30' 
                                         : 'bg-white/5 border border-white/10'
                                 }`}
                             >
                                 <input 
                                     type="checkbox" 
-                                    checked={settings.workType.remote}
+                                    checked={jobSearchPrefs.workType.remote}
                                     onChange={() => handleWorkTypeToggle('remote')}
                                     className="accent-indigo-500"
                                 />
-                                <span>Remote</span>
+                                <span>🏠 Remote</span>
                             </label>
                             <label 
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition ${
-                                    settings.workType.hybrid 
+                                    jobSearchPrefs.workType.hybrid 
                                         ? 'bg-indigo-500/20 border border-indigo-500/30' 
                                         : 'bg-white/5 border border-white/10'
                                 }`}
                             >
                                 <input 
                                     type="checkbox" 
-                                    checked={settings.workType.hybrid}
+                                    checked={jobSearchPrefs.workType.hybrid}
                                     onChange={() => handleWorkTypeToggle('hybrid')}
                                     className="accent-indigo-500"
                                 />
-                                <span>Hybrid</span>
+                                <span>🔄 Hybrid</span>
                             </label>
                             <label 
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition ${
-                                    settings.workType.onsite 
+                                    jobSearchPrefs.workType.onsite 
                                         ? 'bg-indigo-500/20 border border-indigo-500/30' 
                                         : 'bg-white/5 border border-white/10'
                                 }`}
                             >
                                 <input 
                                     type="checkbox" 
-                                    checked={settings.workType.onsite}
+                                    checked={jobSearchPrefs.workType.onsite}
                                     onChange={() => handleWorkTypeToggle('onsite')}
                                     className="accent-indigo-500"
                                 />
-                                <span>On-site</span>
+                                <span>🏢 On-site</span>
                             </label>
                         </div>
                     </div>
 
+                    {/* Employment Type */}
                     <div>
                         <label className="block text-sm text-gray-400 mb-3">Employment Type</label>
                         <div className="flex flex-wrap gap-3">
                             <label 
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition ${
-                                    settings.employmentType.fulltime 
+                                    jobSearchPrefs.employmentType.fulltime 
                                         ? 'bg-indigo-500/20 border border-indigo-500/30' 
                                         : 'bg-white/5 border border-white/10'
                                 }`}
                             >
                                 <input 
                                     type="checkbox" 
-                                    checked={settings.employmentType.fulltime}
+                                    checked={jobSearchPrefs.employmentType.fulltime}
                                     onChange={() => handleEmploymentTypeToggle('fulltime')}
                                     className="accent-indigo-500"
                                 />
@@ -237,14 +476,14 @@ export default function SettingsContent({ user, preferences, cvs }) {
                             </label>
                             <label 
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition ${
-                                    settings.employmentType.contract 
+                                    jobSearchPrefs.employmentType.contract 
                                         ? 'bg-indigo-500/20 border border-indigo-500/30' 
                                         : 'bg-white/5 border border-white/10'
                                 }`}
                             >
                                 <input 
                                     type="checkbox" 
-                                    checked={settings.employmentType.contract}
+                                    checked={jobSearchPrefs.employmentType.contract}
                                     onChange={() => handleEmploymentTypeToggle('contract')}
                                     className="accent-indigo-500"
                                 />
@@ -252,14 +491,14 @@ export default function SettingsContent({ user, preferences, cvs }) {
                             </label>
                             <label 
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition ${
-                                    settings.employmentType.parttime 
+                                    jobSearchPrefs.employmentType.parttime 
                                         ? 'bg-indigo-500/20 border border-indigo-500/30' 
                                         : 'bg-white/5 border border-white/10'
                                 }`}
                             >
                                 <input 
                                     type="checkbox" 
-                                    checked={settings.employmentType.parttime}
+                                    checked={jobSearchPrefs.employmentType.parttime}
                                     onChange={() => handleEmploymentTypeToggle('parttime')}
                                     className="accent-indigo-500"
                                 />
@@ -267,28 +506,72 @@ export default function SettingsContent({ user, preferences, cvs }) {
                             </label>
                         </div>
                     </div>
+
+                    {/* Experience Level */}
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-3">Experience Level</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {experienceLevelOptions.map((level) => (
+                                <label 
+                                    key={level.id}
+                                    className={`flex flex-col px-4 py-3 rounded-xl cursor-pointer transition ${
+                                        jobSearchPrefs.experienceLevels.includes(level.id)
+                                            ? 'bg-indigo-500/20 border border-indigo-500/30' 
+                                            : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={jobSearchPrefs.experienceLevels.includes(level.id)}
+                                            onChange={() => handleExperienceLevelToggle(level.id)}
+                                            className="accent-indigo-500"
+                                        />
+                                        <span className="font-medium">{level.label}</span>
+                                    </div>
+                                    <span className="text-xs text-gray-500 ml-6">{level.description}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Skills */}
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-2">Your Skills</label>
+                        <textarea 
+                            name="skills"
+                            value={jobSearchPrefs.skills}
+                            onChange={handleJobPrefChange}
+                            placeholder="e.g., JavaScript, React, Node.js, Python, AWS, Docker"
+                            className="form-input w-full min-h-[80px] resize-none"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Separate skills with commas - helps match you with relevant jobs</p>
+                    </div>
                 </div>
             </div>
 
-            {/* AI Auto-Apply Settings */}
+            {/* Smart Application Assistant */}
             <div className="glass-card-static rounded-2xl p-8 border border-purple-500/20 bg-purple-500/5">
                 <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
                     <Zap className="w-5 h-5 text-purple-400" />
-                    AI Auto-Apply Settings
+                    Smart Application Assistant
                 </h3>
+                <p className="text-sm text-gray-400 mb-6 -mt-4">
+                    AI-powered tools to help you apply faster and smarter
+                </p>
 
                 <div className="space-y-6">
                     <ToggleSetting
-                        title="Enable Auto-Apply"
-                        description="Let AI automatically apply to high-match jobs"
+                        title="Smart Job Alerts"
+                        description="Get notified when high-match jobs are found for you"
                         enabled={settings.autoApplyEnabled}
                         onToggle={() => handleToggle('autoApplyEnabled')}
                     />
 
                     <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
                         <div>
-                            <div className="font-medium">Minimum Match Score</div>
-                            <div className="text-sm text-gray-400">Only auto-apply to jobs above this match percentage</div>
+                            <div className="font-medium">Minimum Match Score for Alerts</div>
+                            <div className="text-sm text-gray-400">Only notify about jobs above this match percentage</div>
                         </div>
                         <select 
                             name="minMatchScore"
@@ -305,8 +588,8 @@ export default function SettingsContent({ user, preferences, cvs }) {
 
                     <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
                         <div>
-                            <div className="font-medium">Daily Application Limit</div>
-                            <div className="text-sm text-gray-400">Maximum auto-applications per day</div>
+                            <div className="font-medium">Daily Job Recommendations</div>
+                            <div className="text-sm text-gray-400">Maximum job suggestions per day</div>
                         </div>
                         <select 
                             name="dailyLimit"
@@ -322,14 +605,14 @@ export default function SettingsContent({ user, preferences, cvs }) {
                     </div>
 
                     <ToggleSetting
-                        title="Generate Cover Letters"
-                        description="AI writes personalized cover letters for each application"
+                        title="AI Cover Letter Drafts"
+                        description="Generate personalized cover letter drafts you can edit before applying"
                         enabled={settings.generateCoverLetters}
                         onToggle={() => handleToggle('generateCoverLetters')}
                     />
 
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">Default Resume for Auto-Apply</label>
+                        <label className="block text-sm text-gray-400 mb-2">Default Resume for Quick Apply</label>
                         <select 
                             name="defaultResumeId"
                             value={settings.defaultResumeId}
@@ -492,25 +775,37 @@ export default function SettingsContent({ user, preferences, cvs }) {
                 </div>
             </div>
 
-            {/* Save Button */}
-            <div className="flex justify-end">
-                <button 
-                    className="btn-primary px-8 py-3 rounded-xl font-medium flex items-center gap-2"
-                    onClick={handleSave}
-                    disabled={saving}
-                >
-                    {saving ? (
-                        <>
-                            <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                            Saving...
-                        </>
-                    ) : (
-                        <>
-                            <CheckCircle className="w-5 h-5" />
-                            Save All Preferences
-                        </>
-                    )}
-                </button>
+            {/* Spacer for floating save bar */}
+            <div className="h-20"></div>
+
+            {/* Floating Save Bar - Always visible at bottom */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900/95 backdrop-blur-lg border-t border-white/10 p-4 md:pl-72">
+                <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-gray-400 text-sm">
+                        <Save className="w-4 h-4" />
+                        <span className="hidden sm:inline">Remember to save your changes</span>
+                        <span className="sm:hidden">Save changes</span>
+                    </div>
+                    <button 
+                        className="btn-primary px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-medium flex items-center gap-2 text-sm sm:text-base"
+                        onClick={handleSave}
+                        disabled={saving}
+                    >
+                        {saving ? (
+                            <>
+                                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                                <span className="hidden sm:inline">Saving...</span>
+                                <span className="sm:hidden">...</span>
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="hidden sm:inline">Save All Preferences</span>
+                                <span className="sm:hidden">Save</span>
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
         </div>
     );

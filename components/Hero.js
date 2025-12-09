@@ -9,7 +9,7 @@ export default function Hero() {
                     <span className={styles.gradientText}>Powered by AI</span>
                 </h1>
                 <p className={styles.subtitle}>
-                    Create ATS-optimized CVs, automate job applications, and get hired faster with our intelligent career assistant.
+                    Create ATS-optimized CVs, find matching jobs, and streamline your applications with our intelligent career assistant.
                 </p>
                 <div className={styles.ctaGroup}>
                     <button className={styles.primaryBtn}>Create CV Now</button>

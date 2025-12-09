@@ -22,13 +22,23 @@ export default async function JobDetailsPage({ params }) {
         .eq('id', user.id)
         .single();
 
+    // Check if user has any CVs
+    const { data: cvs, error: cvError } = await supabase
+        .from('cvs')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+    const hasCV = !cvError && cvs && cvs.length > 0;
+
     const { id } = await params;
 
     return (
         <JobDetailsContent 
             user={user} 
             profile={profile} 
-            jobId={id} 
+            jobId={id}
+            hasCV={hasCV}
         />
     );
 }

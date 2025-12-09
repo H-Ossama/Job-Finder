@@ -75,41 +75,41 @@ export default function Features() {
                         </ul>
                     </div>
 
-                    {/* Auto Job Searcher */}
+                    {/* Smart Job Search */}
                     <div className="glass-card rounded-3xl p-8 scroll-reveal group" style={{ transitionDelay: '0.1s' }}>
                         <div className="feature-icon w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                             <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
-                        <h3 className="text-2xl font-bold mb-4">Automatic Job Searcher</h3>
+                        <h3 className="text-2xl font-bold mb-4">Smart Job Matching</h3>
                         <p className="text-gray-400 mb-6 leading-relaxed">
-                            Set your preferences once. Our AI scans thousands of job boards 24/7, matches opportunities to your profile, and delivers only the jobs worth your time.
+                            Set your preferences once. Our AI scans multiple job boards, matches opportunities to your profile, and delivers curated jobs worth your attention.
                         </p>
                         <ul className="space-y-3">
                             <li className="flex items-center gap-3 text-gray-300">
                                 <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>
-                                Scans 100+ job platforms daily
+                                Aggregates jobs from multiple platforms
                             </li>
                             <li className="flex items-center gap-3 text-gray-300">
                                 <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>
-                                Smart match scoring system
+                                AI-powered match scoring
                             </li>
                             <li className="flex items-center gap-3 text-gray-300">
                                 <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>
-                                Salary & culture fit analysis
+                                Salary & skills analysis
                             </li>
                             <li className="flex items-center gap-3 text-gray-300">
                                 <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>
-                                One-click apply with tailored CV
+                                Direct links to apply with tailored CV
                             </li>
                         </ul>
                     </div>

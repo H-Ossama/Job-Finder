@@ -111,14 +111,15 @@ export async function searchTheMuse(params = {}) {
         // Limit results
         jobs = jobs.slice(0, limit);
 
+        // Return actual job count, not the API's total which includes all jobs
         return {
             jobs,
-            total: data.total || jobs.length,
+            total: jobs.length, // Use actual returned count, not data.total
             pageCount: data.page_count || 1,
             source: 'themuse',
         };
     } catch (error) {
-        console.error('The Muse search error:', error);
+        console.log(`❌ TheMuse: ${error.message}`);
         return {
             jobs: [],
             total: 0,

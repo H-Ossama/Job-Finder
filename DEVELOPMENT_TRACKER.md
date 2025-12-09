@@ -24,6 +24,17 @@
 | Notifications | `/notifications` | ✅ (Custom header with Mark all read, tabs, types) |
 | Billing | `/billing` | ✅ (Pricing plans, feature comparison, payment methods) |
 
+## ✅ Features Completed
+
+### Auto-Apply System (December 2025)
+- **Real Auto-Apply API** (`/api/jobs/apply`) - Handles job applications with AI cover letter generation
+- **Batch Auto-Apply** (`/api/jobs/auto-apply`) - Automatically finds and applies to matching jobs
+- **AI Cover Letters** - Generates personalized cover letters using OpenRouter/Claude
+- **Application Tracking** - Records all applications (manual & auto) with cover letters
+- **Auto-Apply Modal** - UI for configuring and running batch auto-apply
+- **Quick Apply Button** - One-click apply with cover letter generation
+- **Settings Integration** - Save auto-apply preferences (min match score, daily limit)
+
 ## 🚧 Pending Pages
 
 | Page | Route | Priority |
@@ -73,11 +84,25 @@
 |-------|---------|
 | `profiles` | User profile data |
 | `cvs` | Resume storage |
-| `applications` | Job applications |
-| `preferences` | User settings |
-| `jobs` | Job listings cache |
+| `applications` | Job applications (with auto_applied, cover_letter, match_score fields) |
+| `preferences` | User settings (including auto-apply settings) |
+| `jobs_cache` | Job listings cache |
 | `activity_log` | User activity feed |
 | `interview_progress` | Interview prep tracking |
+| `auto_apply_history` | Auto-apply run logs |
+
+---
+
+## API Endpoints
+
+### Auto-Apply System
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/jobs/apply` | POST | Submit job application with cover letter |
+| `/api/jobs/apply` | GET | Get application history and stats |
+| `/api/jobs/auto-apply` | POST | Run batch auto-apply process |
+| `/api/jobs/auto-apply` | GET | Get auto-apply status and settings |
+| `/api/preferences/general` | POST | Save auto-apply & notification settings |
 
 ---
 

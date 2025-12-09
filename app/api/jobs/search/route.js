@@ -3,11 +3,12 @@
  * GET /api/jobs/search
  * 
  * Aggregates jobs from multiple sources (RemoteOK, Adzuna, JSearch, The Muse)
+ * Includes special handling for Morocco job sources
  */
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { searchJobs, getAvailableProviders } from '@/utils/jobs';
+import { searchJobs, getAvailableProviders, getMoroccoData } from '@/utils/jobs';
 import { cacheJobsBatch } from '@/utils/jobs/cache';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,14 @@ export async function GET(request) {
             salaryMin: parseInt(searchParams.get('salaryMin') || '0', 10),
             salaryMax: parseInt(searchParams.get('salaryMax') || '0', 10),
             remote: searchParams.get('remote') === 'true',
+            // Ausbildung-specific params
+            isAusbildung: searchParams.get('isAusbildung') === 'true' || searchParams.get('ausbildung') === 'true',
+            ausbildungField: searchParams.get('ausbildungField') || searchParams.get('field') || '',
+            startYear: searchParams.get('startYear') || searchParams.get('year') || '',
+            // Morocco-specific params
+            isMorocco: searchParams.get('isMorocco') === 'true' || searchParams.get('morocco') === 'true',
+            moroccoSources: searchParams.get('moroccoSources')?.split(',').filter(Boolean) || null,
+            // Pagination
             page: parseInt(searchParams.get('page') || '1', 10),
             limit: Math.min(parseInt(searchParams.get('limit') || '20', 10), 50), // Max 50 per page
             sources: searchParams.get('sources')?.split(',').filter(Boolean) || null,

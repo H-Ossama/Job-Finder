@@ -15,6 +15,7 @@ export function normalizeJob(job, source) {
         adzuna: normalizeAdzuna,
         jsearch: normalizeJSearch,
         themuse: normalizeTheMuse,
+        ausbildung: normalizeAusbildung,
     };
 
     const normalizer = normalizers[source];
@@ -64,6 +65,23 @@ function createBaseJob(job, source) {
  * Normalize RemoteOK job data
  */
 function normalizeRemoteOK(job) {
+    // Safely parse the date
+    let postedAt;
+    try {
+        if (job.date) {
+            const timestamp = typeof job.date === 'number' ? job.date : parseInt(job.date, 10);
+            if (!isNaN(timestamp) && timestamp > 0) {
+                postedAt = new Date(timestamp * 1000).toISOString();
+            } else {
+                postedAt = new Date().toISOString();
+            }
+        } else {
+            postedAt = new Date().toISOString();
+        }
+    } catch (e) {
+        postedAt = new Date().toISOString();
+    }
+
     return {
         id: `remoteok_${job.id}`,
         externalId: String(job.id),
@@ -86,7 +104,7 @@ function normalizeRemoteOK(job) {
         benefits: [],
         skills: job.tags || [],
         applyUrl: job.url || job.apply_url || `https://remoteok.com/remote-jobs/${job.id}`,
-        postedAt: job.date ? new Date(job.date * 1000).toISOString() : new Date().toISOString(),
+        postedAt,
         expiresAt: null,
         tags: [...(job.tags || []), 'Remote'],
         featured: false,
@@ -204,6 +222,42 @@ function normalizeTheMuse(job) {
     };
 }
 
+/**
+ * Normalize Ausbildung (German apprenticeship) job data
+ * Based on Adzuna data but with Ausbildung-specific fields
+ */
+function normalizeAusbildung(job) {
+    const baseJob = normalizeAdzuna(job);
+    
+    // Override source and add Ausbildung-specific properties
+    return {
+        ...baseJob,
+        id: `ausbildung_${job.id}`,
+        source: 'ausbildung',
+        jobType: 'ausbildung',
+        isAusbildung: true,
+        salaryCurrency: 'EUR',
+        tags: [
+            'Ausbildung',
+            'Azubi',
+            job.category?.label,
+            job.contract_type,
+        ].filter(Boolean),
+        // Ausbildung-specific fields (will be populated by extractAusbildungDetails)
+        ausbildungDetails: {
+            duration: null,
+            startDate: null,
+            requiredEducation: [],
+            trainingSalary: null,
+            vocationalSchool: null,
+            isDualStudy: false,
+            trainingBenefits: [],
+            careerProspects: [],
+            chamberCertification: null,
+        },
+    };
+}
+
 // Helper functions
 
 function detectLocationType(job) {
@@ -221,6 +275,9 @@ function normalizeJobType(type) {
     if (normalized.includes('contract') || normalized.includes('freelance')) return 'contract';
     if (normalized.includes('intern')) return 'internship';
     if (normalized.includes('temp')) return 'temporary';
+    if (normalized.includes('ausbildung') || normalized.includes('azubi') || normalized.includes('apprentice')) return 'ausbildung';
+    if (normalized.includes('trainee')) return 'trainee';
+    if (normalized.includes('dual') && normalized.includes('stud')) return 'dual-study';
     return 'full-time';
 }
 
@@ -337,15 +394,37 @@ function generateTags(job) {
 function parseDate(dateStr) {
     if (!dateStr) return new Date().toISOString();
     
-    // Handle Unix timestamp
+    // Handle Unix timestamp (seconds since epoch)
     if (typeof dateStr === 'number') {
-        return new Date(dateStr * 1000).toISOString();
+        // Validate timestamp is reasonable (after 2020 and not in future)
+        const timestamp = dateStr > 10000000000 ? dateStr : dateStr * 1000; // Handle ms vs s
+        const date = new Date(timestamp);
+        if (!isNaN(date.getTime()) && date.getFullYear() >= 2020 && date <= new Date()) {
+            return date.toISOString();
+        }
+        return new Date().toISOString();
     }
     
-    // Handle ISO date string
-    const date = new Date(dateStr);
-    if (!isNaN(date.getTime())) {
-        return date.toISOString();
+    // Handle string
+    if (typeof dateStr === 'string') {
+        // Try parsing as ISO date string
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+            // Validate date is reasonable (after 2020 and not in future)
+            if (date.getFullYear() >= 2020 && date <= new Date()) {
+                return date.toISOString();
+            }
+        }
+        
+        // Try parsing as Unix timestamp string
+        const timestamp = parseInt(dateStr, 10);
+        if (!isNaN(timestamp) && timestamp > 0) {
+            const ts = timestamp > 10000000000 ? timestamp : timestamp * 1000;
+            const tsDate = new Date(ts);
+            if (!isNaN(tsDate.getTime()) && tsDate.getFullYear() >= 2020 && tsDate <= new Date()) {
+                return tsDate.toISOString();
+            }
+        }
     }
     
     return new Date().toISOString();

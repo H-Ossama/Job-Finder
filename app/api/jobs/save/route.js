@@ -52,6 +52,13 @@ export async function GET(request) {
             .order('created_at', { ascending: false });
 
         if (error) {
+            // Handle case where table doesn't exist yet
+            if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('does not exist')) {
+                return NextResponse.json({
+                    success: true,
+                    data: { jobs: [], total: 0 }
+                });
+            }
             throw error;
         }
 

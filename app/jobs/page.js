@@ -24,16 +24,37 @@ export default async function JobsPage() {
         .eq('id', user.id)
         .single();
 
-    // Fetch user's applications
-    const { data: applications } = await supabase
-        .from('applications')
+    // Fetch user's job search preferences
+    const { data: jobPreferences } = await supabase
+        .from('user_job_preferences')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .single();
+
+    // Fetch user's applications (include all auto-apply fields)
+    const { data: applications } = await supabase
+        .from('applications')
+        .select('*, cvs(id, title)')
+        .eq('user_id', user.id)
+        .order('applied_at', { ascending: false });
+
+    // Check if user has any CVs
+    const { data: cvs, error: cvError } = await supabase
+        .from('cvs')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+    const hasCV = !cvError && cvs && cvs.length > 0;
 
     return (
         <DashboardLayout user={user} profile={profile}>
-            <JobsContent user={user} applications={applications || []} />
+            <JobsContent 
+                user={user} 
+                applications={applications || []} 
+                jobPreferences={jobPreferences}
+                hasCV={hasCV}
+            />
         </DashboardLayout>
     );
 }

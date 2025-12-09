@@ -10,12 +10,12 @@ const features = [
     {
         icon: <Search size={24} />,
         title: 'Smart Job Search',
-        desc: 'Automatically find jobs that match your profile and preferences across multiple platforms.',
+        desc: 'Find jobs that match your profile from multiple platforms with AI-powered matching scores.',
     },
     {
         icon: <Send size={24} />,
-        title: 'Auto-Apply System',
-        desc: 'Let our agent submit applications for you with personalized cover letters and daily summaries.',
+        title: 'Application Toolkit',
+        desc: 'AI-generated cover letters, job tracking, and direct apply links to streamline your applications.',
     },
     {
         icon: <Cpu size={24} />,

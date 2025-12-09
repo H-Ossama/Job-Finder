@@ -89,7 +89,7 @@ export default function Hero({ onOpenSignup }) {
                         </h1>
 
                         <p className="text-xl text-gray-400 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                            Stop writing resumes. Start landing interviews. Our AI crafts perfect CVs while automatically matching you with your dream jobs—24/7.
+                            Stop writing resumes. Start landing interviews. Our AI crafts perfect CVs and helps you find your dream jobs with smart matching.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">

@@ -81,6 +81,26 @@ create policy "Users can update own applications." on applications
 -- JOB SEARCH TABLES
 -- =====================================================
 
+-- Job search results cache - caches search results for performance
+create table job_search_cache (
+  id uuid default gen_random_uuid() primary key,
+  cache_key text unique not null, -- Unique key based on search parameters
+  results jsonb not null, -- Cached search results
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index job_search_cache_key_idx on job_search_cache(cache_key);
+create index job_search_cache_created_at_idx on job_search_cache(created_at);
+
+-- Public read access for search cache (no auth required for search)
+alter table job_search_cache enable row level security;
+
+create policy "Anyone can read search cache." on job_search_cache
+  for select using (true);
+
+create policy "Service role can manage search cache." on job_search_cache
+  for all using (auth.role() = 'service_role');
+
 -- Jobs cache table - stores jobs fetched from external APIs
 create table jobs_cache (
   id uuid default gen_random_uuid() primary key,
@@ -293,6 +313,51 @@ create policy "Users can view own activity." on activity_log
 
 create policy "Users can create activity." on activity_log
   for insert with check (auth.uid() = user_id);
+
+-- =====================================================
+-- Job Matches - Cache AI-calculated match scores
+-- =====================================================
+create table job_matches (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users on delete cascade not null,
+  job_id text not null, -- Job ID (can be external format like 'remoteok_123')
+  cv_id uuid references cvs(id) on delete set null,
+  match_score integer not null check (match_score >= 0 and match_score <= 100),
+  analysis text, -- AI-generated analysis text
+  matched_skills text[], -- Skills the user has that match the job
+  missing_skills text[], -- Skills the job requires that user is missing
+  recommendations text[], -- AI recommendations for improving match
+  job_data jsonb, -- Cached job info (title, company, description snippet)
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  
+  -- Each user can only have one match analysis per job
+  constraint unique_user_job_match unique (user_id, job_id)
+);
+
+create index job_matches_user_id_idx on job_matches(user_id);
+create index job_matches_job_id_idx on job_matches(job_id);
+create index job_matches_match_score_idx on job_matches(match_score desc);
+create index job_matches_created_at_idx on job_matches(created_at desc);
+
+alter table job_matches enable row level security;
+
+create policy "Users can view own job matches." on job_matches
+  for select using (auth.uid() = user_id);
+
+create policy "Users can create own job matches." on job_matches
+  for insert with check (auth.uid() = user_id);
+
+create policy "Users can update own job matches." on job_matches
+  for update using (auth.uid() = user_id);
+
+create policy "Users can delete own job matches." on job_matches
+  for delete using (auth.uid() = user_id);
+
+-- Trigger to update updated_at
+create trigger update_job_matches_updated_at
+  before update on job_matches
+  for each row execute function update_updated_at_column();
 
 -- =====================================================
 -- Function to auto-update updated_at timestamp

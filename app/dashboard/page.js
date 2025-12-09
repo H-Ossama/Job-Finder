@@ -2,55 +2,8 @@ import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DashboardContent from './DashboardContent';
-import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
-
-// Fetch job matches from API
-async function fetchJobMatches() {
-    try {
-        // Get the host from headers for absolute URL
-        const headersList = await headers();
-        const host = headersList.get('host');
-        const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-        
-        const response = await fetch(`${protocol}://${host}/api/jobs/search?q=developer&limit=3`, {
-            cache: 'no-store'
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch jobs');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success && data.data.jobs) {
-            // Transform jobs to match the expected format
-            return data.data.jobs.slice(0, 3).map(job => ({
-                company: job.company || 'Company',
-                initial: (job.company || 'C')[0].toUpperCase(),
-                gradient: `bg-gradient-to-br from-${getRandomColor()}-500/20 to-${getRandomColor()}-500/20`,
-                title: job.title,
-                location: job.location || 'Remote',
-                matchScore: job.matchScore || Math.floor(Math.random() * 20) + 75,
-                description: job.description?.replace(/<[^>]*>/g, '').substring(0, 150) || 'No description available',
-                tags: (job.skills || job.tags || []).slice(0, 3),
-                salary: job.salary || 'Salary not specified',
-                id: job.id
-            }));
-        }
-        
-        return [];
-    } catch (error) {
-        console.error('Error fetching job matches:', error);
-        return [];
-    }
-}
-
-function getRandomColor() {
-    const colors = ['indigo', 'purple', 'blue', 'green', 'pink', 'amber'];
-    return colors[Math.floor(Math.random() * colors.length)];
-}
 
 // Generate activity items from applications
 function generateActivityItems(applications) {
@@ -139,9 +92,6 @@ export default async function Dashboard() {
         .eq('id', user.id)
         .single();
 
-    // Fetch job matches from API
-    const jobMatches = await fetchJobMatches();
-    
     // Generate activity items from applications
     const activities = generateActivityItems(applications);
 
@@ -153,7 +103,6 @@ export default async function Dashboard() {
                 user={user} 
                 cvs={cvs || []} 
                 applications={applications || []} 
-                jobMatches={jobMatches}
                 activities={activities}
             />
         </DashboardLayout>

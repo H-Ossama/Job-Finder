@@ -88,6 +88,30 @@
     box-shadow: 0 4px 12px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
 }
 
+.refreshBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.05);
+    border: 1px solid hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.7);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.refreshBtn:hover:not(:disabled) {
+    background: hsla(var(--light-h), var(--light-s), var(--light-l), 0.1);
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+}
+
+.refreshBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 .settingsBtn {
     display: flex;
     align-items: center;
@@ -279,6 +303,55 @@
 
 .emptyState p {
     margin: 0;
+}
+
+/* Error State */
+.errorState {
+    text-align: center;
+    padding: 60px 24px;
+    background: hsla(0, 70%, 50%, 0.1);
+    border: 1px solid hsla(0, 70%, 50%, 0.2);
+    border-radius: 16px;
+    color: hsla(var(--light-h), var(--light-s), var(--light-l), 0.7);
+}
+
+.errorState svg {
+    margin-bottom: 16px;
+    color: hsl(0, 70%, 60%);
+}
+
+.errorState h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.125rem;
+    color: hsl(var(--light-h), var(--light-s), var(--light-l));
+}
+
+.errorState p {
+    margin: 0 0 20px 0;
+}
+
+.retryBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(
+        135deg,
+        hsl(var(--primary-h), var(--primary-s), var(--primary-l)),
+        hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l))
+    );
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.retryBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
 }
 
 /* Notification Item */

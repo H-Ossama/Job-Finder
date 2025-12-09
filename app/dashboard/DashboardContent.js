@@ -8,7 +8,8 @@ import {
     Calendar,
     Plus,
     Check,
-    Lightbulb
+    Lightbulb,
+    Loader2
 } from 'lucide-react';
 
 // Animated counter hook
@@ -34,6 +35,70 @@ function useAnimatedCounter(target, duration = 1500) {
     }, [target, duration]);
     
     return count;
+}
+
+// Hook to fetch job matches client-side
+function useJobMatches(hasCV = false) {
+    const [jobMatches, setJobMatches] = useState([]);
+    const [isLoading, setIsLoading] = useState(hasCV); // Only show loading if we're going to fetch
+    
+    useEffect(() => {
+        // Don't fetch if user doesn't have a CV
+        if (!hasCV) {
+            setIsLoading(false);
+            return;
+        }
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        
+        async function fetchJobs() {
+            try {
+                const response = await fetch('/api/jobs/search?q=developer&limit=3', {
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) throw new Error('Failed to fetch');
+                
+                const data = await response.json();
+                
+                if (data.success && data.data.jobs) {
+                    const colors = ['indigo', 'purple', 'blue', 'green', 'pink', 'amber'];
+                    const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
+                    
+                    setJobMatches(data.data.jobs.slice(0, 3).map(job => ({
+                        company: job.company || 'Company',
+                        initial: (job.company || 'C')[0].toUpperCase(),
+                        gradient: `bg-gradient-to-br from-${getRandomColor()}-500/20 to-${getRandomColor()}-500/20`,
+                        title: job.title,
+                        location: job.location || 'Remote',
+                        matchScore: job.matchScore || Math.floor(Math.random() * 20) + 75,
+                        description: job.description?.replace(/<[^>]*>/g, '').substring(0, 150) || 'No description available',
+                        tags: (job.skills || job.tags || []).slice(0, 3),
+                        salary: job.salary || 'Salary not specified',
+                        id: job.id
+                    })));
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error fetching job matches:', error);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        
+        fetchJobs();
+        
+        return () => {
+            clearTimeout(timeoutId);
+            controller.abort();
+        };
+    }, [hasCV]);
+    
+    return { jobMatches, isLoading };
 }
 
 // Stat Card Component
@@ -150,15 +215,16 @@ function JobCard({ company, initial, gradient, title, location, matchScore, desc
     );
 }
 
-export default function DashboardContent({ user, cvs, applications, jobMatches = [], activities = [] }) {
+export default function DashboardContent({ user, cvs, applications, activities = [] }) {
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
     const firstName = userName.split(' ')[0];
     
     const cvCount = cvs?.length || 0;
+    const hasCV = cvCount > 0;
     const applicationCount = applications?.length || 0;
 
-    // Activity and job data will be passed as props or fetched from API
-    // Mock data removed - using props with defaults
+    // Fetch job matches client-side (non-blocking) - only if user has a CV
+    const { jobMatches, isLoading: jobsLoading } = useJobMatches(hasCV);
 
     return (
         <>
@@ -176,32 +242,32 @@ export default function DashboardContent({ user, cvs, applications, jobMatches =
                     icon={FileText}
                     iconBg="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400"
                     label="Active CVs"
-                    value={cvCount || 3}
-                    badge="+1 today"
-                    badgeColor="tag-success"
+                    value={cvCount}
+                    badge={cvCount > 0 ? null : "Create one"}
+                    badgeColor={cvCount > 0 ? "tag-success" : "tag-warning"}
                     delay={1}
                 />
                 <StatCard
                     icon={Briefcase}
                     iconBg="bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-400"
                     label="Job Matches"
-                    value={47}
-                    badge="New"
-                    badgeColor="tag-primary"
+                    value={hasCV ? jobMatches.length : 0}
+                    badge={hasCV ? (jobMatches.length > 0 ? "New" : null) : "Need CV"}
+                    badgeColor={hasCV ? "tag-primary" : "tag-warning"}
                     delay={2}
                 />
                 <StatCard
                     icon={Clock}
                     iconBg="bg-gradient-to-br from-amber-500/20 to-orange-500/20 text-amber-400"
                     label="Applications Sent"
-                    value={applicationCount || 12}
+                    value={applicationCount}
                     delay={3}
                 />
                 <StatCard
                     icon={Calendar}
                     iconBg="bg-gradient-to-br from-pink-500/20 to-rose-500/20 text-pink-400"
                     label="Interviews Scheduled"
-                    value={3}
+                    value={applications?.filter(a => a.status === 'interview')?.length || 0}
                     delay={4}
                 />
             </div>
@@ -242,18 +308,84 @@ export default function DashboardContent({ user, cvs, applications, jobMatches =
                 <div className="flex items-center justify-between mb-5">
                     <div>
                         <h2 className="text-lg font-semibold">Top Job Matches</h2>
-                        <p className="text-sm text-gray-400">Based on your profile and preferences</p>
+                        <p className="text-sm text-gray-400">
+                            {hasCV ? 'Based on your CV and preferences' : 'Create a CV to unlock AI-powered matching'}
+                        </p>
                     </div>
-                    <button className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition">
+                    <Link href="/job-search" className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition">
                         View all →
-                    </button>
+                    </Link>
                 </div>
 
-                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {jobMatches.map((job, i) => (
-                        <JobCard key={i} {...job} />
-                    ))}
-                </div>
+                {!hasCV ? (
+                    /* No CV - Show CTA banner */
+                    <div className="glass-card-static rounded-2xl p-6" style={{ 
+                        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(234, 88, 12, 0.1) 100%)',
+                        border: '1px solid rgba(245, 158, 11, 0.4)',
+                    }}>
+                        <div className="flex flex-col md:flex-row items-center gap-6">
+                            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-8 h-8 text-amber-400" />
+                            </div>
+                            <div className="flex-1 text-center md:text-left">
+                                <h3 className="font-semibold mb-2">Create Your CV to Unlock AI Features</h3>
+                                <p className="text-gray-400 text-sm mb-3">
+                                    Get personalized job matches, AI-powered match scores, experience comparisons, and quick apply functionality.
+                                </p>
+                                <div className="flex flex-wrap justify-center md:justify-start gap-3 text-xs text-gray-400">
+                                    <span>📊 Match Score Analysis</span>
+                                    <span>⏱️ Experience Comparison</span>
+                                    <span>✅ Skills Detection</span>
+                                    <span>⚡ Quick Apply</span>
+                                </div>
+                            </div>
+                            <Link 
+                                href="/cv-builder" 
+                                className="px-5 py-3 rounded-xl flex items-center gap-2 whitespace-nowrap font-semibold text-sm"
+                                style={{ background: 'linear-gradient(135deg, #f59e0b, #ea580c)' }}
+                            >
+                                <Plus className="w-4 h-4" />
+                                Create CV Now
+                            </Link>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {jobsLoading ? (
+                            // Loading skeleton
+                            <>
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="job-match-card animate-pulse">
+                                        <div className="flex items-start gap-4 mb-4">
+                                            <div className="w-12 h-12 rounded-xl bg-gray-700/50"></div>
+                                            <div className="flex-1">
+                                                <div className="h-4 bg-gray-700/50 rounded w-3/4 mb-2"></div>
+                                                <div className="h-3 bg-gray-700/50 rounded w-1/2"></div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2 mb-4">
+                                            <div className="h-3 bg-gray-700/50 rounded w-full"></div>
+                                            <div className="h-3 bg-gray-700/50 rounded w-5/6"></div>
+                                        </div>
+                                        <div className="flex gap-2 mb-4">
+                                            <div className="h-6 bg-gray-700/50 rounded w-16"></div>
+                                            <div className="h-6 bg-gray-700/50 rounded w-20"></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </>
+                        ) : jobMatches.length > 0 ? (
+                            jobMatches.map((job, i) => (
+                                <JobCard key={i} {...job} />
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-8 text-gray-400">
+                                <Briefcase className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                <p>No job matches found. Try updating your profile!</p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Profile Completion & Tips Section */}

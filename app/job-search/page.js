@@ -23,9 +23,30 @@ export default async function JobSearchPage() {
         .eq('id', user.id)
         .single();
 
+    // Fetch user's job search preferences
+    const { data: jobPreferences } = await supabase
+        .from('user_job_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+    // Check if user has any CVs
+    const { data: cvs, error: cvError } = await supabase
+        .from('cvs')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+    const hasCV = !cvError && cvs && cvs.length > 0;
+
     return (
         <DashboardLayout user={user} profile={profile}>
-            <JobSearchContent user={user} profile={profile} />
+            <JobSearchContent 
+                user={user} 
+                profile={profile} 
+                jobPreferences={jobPreferences}
+                hasCV={hasCV}
+            />
         </DashboardLayout>
     );
 }

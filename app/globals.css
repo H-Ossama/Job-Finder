@@ -14,6 +14,11 @@
   --gradient-end: #1a1a2e;
 }
 
+/* Arabic font class */
+.font-arabic {
+  font-family: var(--font-amiri), 'Times New Roman', serif;
+}
+
 /* Theme: Purple (Default) */
 [data-theme="purple"] {
   --primary-h: 239;
@@ -67,7 +72,7 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
   color: white;
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
@@ -277,8 +282,7 @@ body {
    ╚═══════════════════════════════════════════════════════════════════════╝ */
 
 .text-gradient {
-  background: linear-gradient(135deg, #fff 0%, var(--accent-color) 50%, 
-    hsl(var(--primary-h), var(--primary-s), var(--primary-l)) 100%);
+  background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1056,6 +1060,31 @@ body {
   animation: pulse-dot 2s infinite;
 }
 
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  border-radius: 100px;
+  border: 2px solid #0f0f1a;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  animation: badge-pulse 2s infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
 @keyframes pulse-dot {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.2); opacity: 0.8; }
@@ -1608,6 +1637,12 @@ select.form-input {
   background-position: right 12px center;
   background-size: 20px;
   padding-right: 44px;
+}
+
+select.form-input option {
+  background-color: #1f2937;
+  color: white;
+  padding: 12px;
 }
 
 /* ╔═══════════════════════════════════════════════════════════════════════╗

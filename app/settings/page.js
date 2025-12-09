@@ -24,9 +24,16 @@ export default async function SettingsPage() {
         .eq('id', user.id)
         .single();
 
-    // Fetch user preferences
+    // Fetch user preferences (general)
     const { data: preferences } = await supabase
         .from('preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+    // Fetch job search preferences
+    const { data: jobPreferences } = await supabase
+        .from('user_job_preferences')
         .select('*')
         .eq('user_id', user.id)
         .single();
@@ -39,7 +46,12 @@ export default async function SettingsPage() {
 
     return (
         <DashboardLayout user={user} profile={profile}>
-            <SettingsContent user={user} preferences={preferences} cvs={cvs || []} />
+            <SettingsContent 
+                user={user} 
+                preferences={preferences} 
+                jobPreferences={jobPreferences}
+                cvs={cvs || []} 
+            />
         </DashboardLayout>
     );
 }

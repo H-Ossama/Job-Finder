@@ -51,7 +51,13 @@ export default function PageLoader() {
     // Listen for link clicks
     useEffect(() => {
         const handleClick = (e) => {
+            // Skip if clicking on interactive elements inside links
             const target = e.target.closest('a');
+            const clickedElement = e.target.closest('button, input, select, textarea, [role="button"]');
+            
+            // If clicked on an interactive element, don't show loader
+            if (clickedElement) return;
+            
             if (!target) return;
             
             const href = target.getAttribute('href');

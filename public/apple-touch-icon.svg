@@ -1,10 +1,46 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
   <defs>
-    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6366f1"/>
-      <stop offset="100%" style="stop-color:#a855f7"/>
+    <linearGradient id="hammerGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e65100"/>
+      <stop offset="50%" style="stop-color:#ff9800"/>
+      <stop offset="100%" style="stop-color:#ffc107"/>
+    </linearGradient>
+    <linearGradient id="anvilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#546e7a"/>
+      <stop offset="100%" style="stop-color:#263238"/>
+    </linearGradient>
+    <linearGradient id="gearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#78909c"/>
+      <stop offset="100%" style="stop-color:#455a64"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
     </linearGradient>
   </defs>
-  <rect width="180" height="180" rx="40" fill="url(#logoGradient)"/>
-  <path d="M135 85.5C135 95.5 126 100 90 100C54 100 45 95.5 45 85.5M105 50V40C105 35 101 30 96 30H84C79 30 75 35 75 40V50M90 70V70.1M50 140H130C136.627 140 142 134.627 142 128V62C142 55.3726 136.627 50 130 50H50C43.3726 50 38 55.3726 38 62V128C38 134.627 43.3726 140 50 140Z" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Background -->
+  <rect width="180" height="180" rx="40" fill="url(#bgGrad)"/>
+  
+  <!-- Anvil base -->
+  <path d="M34 135 L146 135 L135 113 L124 113 L124 102 L56 102 L56 113 L45 113 Z" fill="url(#anvilGrad)"/>
+  <ellipse cx="90" cy="102" rx="39" ry="11" fill="url(#anvilGrad)"/>
+  
+  <!-- Gear behind -->
+  <circle cx="67" cy="79" r="28" fill="url(#gearGrad)" stroke="#37474f" stroke-width="2"/>
+  <circle cx="67" cy="79" r="14" fill="#1a1a2e"/>
+  <!-- Gear teeth -->
+  <rect x="61" y="45" width="11" height="11" fill="url(#gearGrad)"/>
+  <rect x="61" y="101" width="11" height="11" fill="url(#gearGrad)"/>
+  <rect x="33" y="73" width="11" height="11" fill="url(#gearGrad)"/>
+  <rect x="90" y="73" width="11" height="11" fill="url(#gearGrad)"/>
+  
+  <!-- Hammer handle with arrow -->
+  <path d="M56 146 L135 34" stroke="url(#hammerGrad)" stroke-width="14" stroke-linecap="round"/>
+  <!-- Arrow head at bottom -->
+  <polygon points="45,157 67,146 56,135" fill="url(#hammerGrad)"/>
+  
+  <!-- Hammer head -->
+  <path d="M124 23 Q146 11 157 34 L146 45 Q135 34 124 39 Z" fill="url(#anvilGrad)"/>
+  <path d="M135 17 Q152 23 146 45" stroke="#37474f" stroke-width="2" fill="none"/>
 </svg>

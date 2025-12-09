@@ -14,7 +14,7 @@ const BASE_URL = 'https://remoteok.com/api';
 export async function searchRemoteOK(params = {}) {
     const {
         query = '',
-        limit = 50,
+        limit = 100,
         tags = [],
     } = params;
 
@@ -71,7 +71,7 @@ export async function searchRemoteOK(params = {}) {
             source: 'remoteok',
         };
     } catch (error) {
-        console.error('RemoteOK search error:', error);
+        console.log(`❌ RemoteOK: ${error.message}`);
         return {
             jobs: [],
             total: 0,

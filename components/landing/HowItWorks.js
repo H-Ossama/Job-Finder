@@ -47,7 +47,7 @@ export default function HowItWorks() {
                             <div className="glass-card rounded-3xl p-6 text-center relative z-10">
                                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-orange-600 flex items-center justify-center text-2xl font-bold mx-auto mb-4">4</div>
                                 <h4 className="font-semibold text-lg mb-3">Get Matched</h4>
-                                <p className="text-gray-400 text-sm">Receive daily curated job matches. Apply with one click.</p>
+                                <p className="text-gray-400 text-sm">Receive daily curated job matches with direct apply links.</p>
                             </div>
                         </div>
                     </div>

@@ -15,9 +15,31 @@ import {
 
 export default function DashboardHeader({ user, profile, onMenuClick }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
     const router = useRouter();
     const supabase = createClient();
+
+    // Fetch unread notification count
+    useEffect(() => {
+        const fetchUnreadCount = async () => {
+            try {
+                const response = await fetch('/api/notifications/unread-count');
+                const data = await response.json();
+                if (data.success) {
+                    setUnreadCount(data.data.unreadCount);
+                }
+            } catch (err) {
+                console.error('Error fetching unread count:', err);
+            }
+        };
+
+        fetchUnreadCount();
+        
+        // Refresh count every 60 seconds (reduced frequency)
+        const interval = setInterval(fetchUnreadCount, 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -78,7 +100,11 @@ export default function DashboardHeader({ user, profile, onMenuClick }) {
                     onClick={() => router.push('/notifications')}
                 >
                     <Bell className="w-5 h-5 text-gray-400" />
-                    <span className="notification-dot pulse" />
+                    {unreadCount > 0 && (
+                        <span className="notification-badge">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    )}
                 </button>
 
                 {/* User Dropdown */}

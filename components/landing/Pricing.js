@@ -91,11 +91,11 @@ export default function Pricing({ onOpenSignup }) {
                                 </li>
                                 <li className="flex items-center gap-3 text-gray-300 text-sm">
                                     <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                                    Auto job search (100/day)
+                                    Smart job search (100/day)
                                 </li>
                                 <li className="flex items-center gap-3 text-gray-300 text-sm">
                                     <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                                    One-click applications
+                                    AI cover letter drafts
                                 </li>
                                 <li className="flex items-center gap-3 text-gray-300 text-sm">
                                     <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>

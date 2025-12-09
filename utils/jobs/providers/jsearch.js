@@ -5,6 +5,7 @@
  */
 
 const BASE_URL = 'https://jsearch.p.rapidapi.com';
+const RAPIDAPI_HOST = 'jsearch.p.rapidapi.com';
 
 /**
  * Search for jobs using JSearch API
@@ -15,7 +16,7 @@ export async function searchJSearch(params = {}) {
     const {
         query = 'developer',
         location = '',
-        country = '',
+        country = 'us',
         remote = false,
         jobType = '',
         experienceLevel = '',
@@ -26,27 +27,29 @@ export async function searchJSearch(params = {}) {
 
     const apiKey = process.env.JSEARCH_API_KEY;
 
-    if (!apiKey) {
+    if (!apiKey || apiKey === 'your_rapidapi_key') {
         console.warn('JSearch API key not configured');
         return { jobs: [], total: 0, source: 'jsearch' };
     }
 
     try {
-        // Build search query
+        // Build search query - JSearch expects "job_title in location" format
         let searchQuery = query;
         if (location) {
             searchQuery += ` in ${location}`;
         }
-        if (country) {
-            searchQuery += ` ${country}`;
-        }
 
-        // Build query parameters
+        // Build query parameters according to JSearch API spec
         const queryParams = new URLSearchParams({
             query: searchQuery,
             page: String(page),
-            num_pages: '1',
+            num_pages: '3', // Fetch multiple pages for more results
         });
+
+        // Add country filter
+        if (country) {
+            queryParams.set('country', country.toLowerCase());
+        }
 
         // Add remote filter
         if (remote) {
@@ -77,16 +80,17 @@ export async function searchJSearch(params = {}) {
         const url = `${BASE_URL}/search?${queryParams.toString()}`;
         
         const response = await fetch(url, {
+            method: 'GET',
             headers: {
                 'X-RapidAPI-Key': apiKey,
-                'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+                'X-RapidAPI-Host': RAPIDAPI_HOST,
             },
-            next: { revalidate: 300 }, // Cache for 5 minutes
         });
 
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`JSearch API error: ${response.status} - ${errorText}`);
+            console.log(`❌ JSearch: HTTP ${response.status}`);
+            throw new Error(`JSearch API error: ${response.status}`);
         }
 
         const data = await response.json();
@@ -97,7 +101,7 @@ export async function searchJSearch(params = {}) {
             source: 'jsearch',
         };
     } catch (error) {
-        console.error('JSearch search error:', error);
+        console.log(`❌ JSearch: ${error.message}`);
         return {
             jobs: [],
             total: 0,
@@ -115,7 +119,7 @@ export async function searchJSearch(params = {}) {
 export async function getJSearchJobDetails(jobId) {
     const apiKey = process.env.JSEARCH_API_KEY;
 
-    if (!apiKey) {
+    if (!apiKey || apiKey === 'your_rapidapi_key') {
         return null;
     }
 
@@ -123,11 +127,11 @@ export async function getJSearchJobDetails(jobId) {
         const url = `${BASE_URL}/job-details?job_id=${encodeURIComponent(jobId)}`;
         
         const response = await fetch(url, {
+            method: 'GET',
             headers: {
                 'X-RapidAPI-Key': apiKey,
-                'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+                'X-RapidAPI-Host': RAPIDAPI_HOST,
             },
-            next: { revalidate: 3600 }, // Cache for 1 hour
         });
 
         if (!response.ok) {
@@ -151,7 +155,7 @@ export async function getJSearchSalary(params = {}) {
     const { title = '', location = '' } = params;
     const apiKey = process.env.JSEARCH_API_KEY;
 
-    if (!apiKey) {
+    if (!apiKey || apiKey === 'your_rapidapi_key') {
         return null;
     }
 
@@ -164,11 +168,11 @@ export async function getJSearchSalary(params = {}) {
         const url = `${BASE_URL}/estimated-salary?${queryParams.toString()}`;
         
         const response = await fetch(url, {
+            method: 'GET',
             headers: {
                 'X-RapidAPI-Key': apiKey,
-                'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+                'X-RapidAPI-Host': RAPIDAPI_HOST,
             },
-            next: { revalidate: 86400 }, // Cache for 24 hours
         });
 
         if (!response.ok) {

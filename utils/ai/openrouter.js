@@ -733,4 +733,272 @@ Remember:
     }
 }
 
+/**
+ * Generate a personalized cover letter for a job application
+ * @param {Object} cvContent - The user's CV content
+ * @param {Object} jobData - The job posting data
+ * @param {Object} options - Generation options (tone, length)
+ * @returns {Promise<Object>} Generated cover letter and summary
+ */
+export async function generateCoverLetter(cvContent, jobData, options = {}) {
+    const { tone = 'professional', length = 'medium' } = options;
+    
+    const lengthGuide = {
+        short: '150-200 words, 2-3 paragraphs',
+        medium: '250-350 words, 3-4 paragraphs',
+        long: '400-500 words, 4-5 paragraphs'
+    };
+
+    const toneGuide = {
+        professional: 'formal, business-appropriate language',
+        friendly: 'warm yet professional, approachable tone',
+        enthusiastic: 'energetic, passionate, showing genuine excitement',
+        confident: 'assertive, showcasing achievements prominently'
+    };
+
+    const systemPrompt = `You are an expert career coach and professional writer specializing in cover letters that get results.
+
+Your cover letters should:
+1. Be highly personalized to both the candidate AND the specific job
+2. Open with a compelling hook that grabs attention
+3. Clearly demonstrate how the candidate's experience matches job requirements
+4. Include specific achievements with metrics when available
+5. Show genuine enthusiasm for the company and role
+6. End with a clear call to action
+
+TONE: Use ${toneGuide[tone] || toneGuide.professional}
+LENGTH: ${lengthGuide[length] || lengthGuide.medium}
+
+NEVER:
+- Use generic phrases like "I am writing to apply for..."
+- Include placeholder text or brackets
+- Copy job description verbatim
+- Make up achievements or experience not in the CV
+
+Return a JSON object with:
+{
+    "coverLetter": "The full cover letter text",
+    "summary": "A brief 1-2 sentence summary of why this is a good match for auto-apply tracking",
+    "keyMatches": ["Key qualification 1", "Key qualification 2"],
+    "highlightedAchievements": ["Achievement used 1", "Achievement used 2"]
+}`;
+
+    // Build CV summary
+    const candidateName = `${cvContent?.personalInfo?.firstName || ''} ${cvContent?.personalInfo?.lastName || ''}`.trim() || 'The Candidate';
+    const candidateTitle = cvContent?.personalInfo?.title || '';
+    
+    const experienceSummary = cvContent?.experience?.map(e => {
+        return `${e.title} at ${e.company}: ${e.description || e.bullets?.join('. ') || 'Relevant experience'}`;
+    }).join('\n') || 'Experience not detailed';
+
+    const skillsList = [
+        ...(cvContent?.skills?.technical || []),
+        ...(cvContent?.skills?.soft || [])
+    ].join(', ') || 'Various professional skills';
+
+    const prompt = `Write a cover letter for this job application:
+
+=== CANDIDATE PROFILE ===
+Name: ${candidateName}
+Current/Recent Title: ${candidateTitle}
+Email: ${cvContent?.personalInfo?.email || 'Not provided'}
+
+Professional Summary:
+${cvContent?.summary || 'Experienced professional seeking new opportunities'}
+
+Work Experience:
+${experienceSummary}
+
+Key Skills: ${skillsList}
+
+Education:
+${cvContent?.education?.map(e => `${e.degree}${e.field ? ' in ' + e.field : ''} from ${e.school}`).join('; ') || 'Relevant education'}
+
+=== JOB POSTING ===
+Job Title: ${jobData.title || 'Position'}
+Company: ${jobData.company || 'The Company'}
+Location: ${jobData.location || 'Not specified'}
+
+Job Description:
+${(jobData.description || '').substring(0, 2000)}
+
+Required Skills/Qualifications:
+${jobData.skills?.join(', ') || jobData.tags?.join(', ') || 'See job description'}
+
+=== INSTRUCTIONS ===
+Write a compelling cover letter that:
+1. Opens with a personalized hook mentioning the specific company and role
+2. Highlights 2-3 most relevant experiences/achievements that match job requirements
+3. Shows enthusiasm for this specific opportunity
+4. Ends with a confident call to action
+
+Return JSON only.`;
+
+    try {
+        const response = await callOpenRouter({ 
+            prompt, 
+            systemPrompt,
+            model: 'anthropic/claude-3-haiku' 
+        });
+
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const result = JSON.parse(jsonMatch[0]);
+            return {
+                coverLetter: result.coverLetter || '',
+                summary: result.summary || `Applied to ${jobData.title} at ${jobData.company}`,
+                keyMatches: result.keyMatches || [],
+                highlightedAchievements: result.highlightedAchievements || []
+            };
+        }
+        throw new Error('Invalid response format');
+    } catch (error) {
+        console.error('Cover letter generation error:', error);
+        // Return a basic template if AI fails
+        return {
+            coverLetter: generateFallbackCoverLetter(cvContent, jobData),
+            summary: `Applied to ${jobData.title} at ${jobData.company}`,
+            keyMatches: [],
+            highlightedAchievements: []
+        };
+    }
+}
+
+/**
+ * Generate a fallback cover letter when AI is unavailable
+ */
+function generateFallbackCoverLetter(cvContent, jobData) {
+    const name = `${cvContent?.personalInfo?.firstName || ''} ${cvContent?.personalInfo?.lastName || ''}`.trim() || 'Applicant';
+    const title = cvContent?.personalInfo?.title || 'Professional';
+    const company = jobData.company || 'your company';
+    const position = jobData.title || 'the position';
+    
+    return `Dear Hiring Manager,
+
+I am excited to apply for the ${position} position at ${company}. As a ${title} with experience in ${cvContent?.skills?.technical?.slice(0, 3).join(', ') || 'relevant technologies'}, I am confident in my ability to contribute to your team.
+
+${cvContent?.summary || `Throughout my career, I have developed strong expertise in my field and am eager to bring my skills to ${company}.`}
+
+${cvContent?.experience?.[0] ? `In my role as ${cvContent.experience[0].title} at ${cvContent.experience[0].company}, I ${cvContent.experience[0].description?.substring(0, 200) || 'gained valuable experience that aligns with this opportunity'}.` : ''}
+
+I am particularly drawn to this opportunity because of ${company}'s reputation and the exciting work being done. I would welcome the opportunity to discuss how my background and enthusiasm can benefit your team.
+
+Thank you for considering my application.
+
+Best regards,
+${name}`;
+}
+
+/**
+ * Generate application email content for jobs that accept email applications
+ * @param {Object} cvContent - The user's CV content
+ * @param {Object} jobData - The job posting data
+ * @param {string} coverLetter - Pre-generated cover letter
+ * @returns {Promise<Object>} Email subject and body
+ */
+export async function generateApplicationEmail(cvContent, jobData, coverLetter) {
+    const candidateName = `${cvContent?.personalInfo?.firstName || ''} ${cvContent?.personalInfo?.lastName || ''}`.trim();
+    const position = jobData.title || 'Position';
+    const company = jobData.company || 'Company';
+
+    const systemPrompt = `You are an expert at crafting effective job application emails.
+Create professional, concise email content that will get noticed by hiring managers.
+
+Return JSON with:
+{
+    "subject": "Email subject line (include position title)",
+    "body": "Email body - brief intro, mention attachment, call to action"
+}`;
+
+    const prompt = `Create an application email for:
+Position: ${position}
+Company: ${company}
+Candidate: ${candidateName}
+
+The cover letter is attached separately. Write a brief email body that:
+1. Introduces the candidate
+2. References the specific position
+3. Mentions attached resume/cover letter
+4. Ends professionally
+
+Keep it under 100 words.`;
+
+    try {
+        const response = await callOpenRouter({ prompt, systemPrompt });
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+    } catch (error) {
+        console.error('Email generation error:', error);
+    }
+
+    // Fallback
+    return {
+        subject: `Application for ${position} - ${candidateName}`,
+        body: `Dear Hiring Manager,
+
+I am writing to express my interest in the ${position} position at ${company}. Please find attached my resume and cover letter for your consideration.
+
+I am excited about this opportunity and would welcome the chance to discuss how my skills align with your needs.
+
+Thank you for your time.
+
+Best regards,
+${candidateName}`
+    };
+}
+
+/**
+ * Analyze a job posting to extract key application requirements
+ * @param {Object} jobData - The job posting data
+ * @returns {Promise<Object>} Application requirements analysis
+ */
+export async function analyzeJobApplication(jobData) {
+    const systemPrompt = `Analyze job postings to extract application-specific information.
+Return JSON with:
+{
+    "applicationMethod": "website|email|form|linkedin|other",
+    "applicationEmail": "email address if mentioned",
+    "requiredDocuments": ["resume", "cover letter", "portfolio", etc],
+    "applicationDeadline": "deadline if mentioned",
+    "applicationInstructions": "any specific instructions",
+    "keyRequirements": ["requirement 1", "requirement 2"],
+    "dealbreakers": ["must-have 1", "must-have 2"],
+    "niceToHaves": ["optional 1", "optional 2"]
+}`;
+
+    const prompt = `Analyze this job posting for application requirements:
+
+Title: ${jobData.title}
+Company: ${jobData.company}
+Apply URL: ${jobData.applyUrl || jobData.url}
+
+Description:
+${(jobData.description || '').substring(0, 3000)}
+
+Extract all application-related information.`;
+
+    try {
+        const response = await callOpenRouter({ prompt, systemPrompt });
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+    } catch (error) {
+        console.error('Job analysis error:', error);
+    }
+
+    return {
+        applicationMethod: jobData.applyUrl?.includes('mailto:') ? 'email' : 'website',
+        applicationEmail: null,
+        requiredDocuments: ['resume'],
+        applicationDeadline: null,
+        applicationInstructions: null,
+        keyRequirements: jobData.skills || [],
+        dealbreakers: [],
+        niceToHaves: []
+    };
+}
+
 export { callOpenRouter };

@@ -13,7 +13,8 @@ import {
     BarChart3, 
     User, 
     Settings,
-    Sparkles
+    Sparkles,
+    Zap
 } from 'lucide-react';
 
 const getMainLinks = (cvCount) => [
@@ -57,10 +58,7 @@ export default function DashboardSidebar({ isOpen, onClose, cvCount = 0 }) {
                 {/* Logo */}
                 <div className="p-6 border-b border-white/5">
                     <Link href="/" className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl logo-gradient flex items-center justify-center">
-                            <Briefcase className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-lg font-bold">
+                        <span className="text-xl font-bold">
                             CareerForge<span className="text-accent">.ai</span>
                         </span>
                     </Link>
@@ -123,7 +121,7 @@ export default function DashboardSidebar({ isOpen, onClose, cvCount = 0 }) {
                             <Sparkles className="w-5 h-5 text-white" />
                         </div>
                         <h4 className="font-semibold mb-1">Upgrade to Pro</h4>
-                        <p className="text-xs text-gray-400 mb-4">Get unlimited CVs & auto-apply features</p>
+                        <p className="text-xs text-gray-400 mb-4">Get unlimited CVs & smart job matching</p>
                         <button className="btn-primary w-full py-2.5 rounded-xl text-sm font-medium">
                             Upgrade Now
                         </button>
