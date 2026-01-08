@@ -196,7 +196,114 @@ After logging in, users can:
 
 ## 🚢 Deployment
 
-### Vercel (Recommended)
+### Railway (Recommended)
+
+Railway is a modern platform for deploying web applications with minimal configuration.
+
+#### Prerequisites
+- Railway account ([sign up here](https://railway.app))
+- GitHub repository with your code
+
+#### Step-by-Step Guide
+
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Ready for Railway deployment"
+   git push origin main
+   ```
+
+2. **Connect Railway to GitHub**
+   - Go to [Railway Dashboard](https://railway.app/dashboard)
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Authorize Railway to access your GitHub account
+   - Select your Job-Finder repository
+
+3. **Configure Environment Variables**
+   
+   In Railway Dashboard, go to Variables and add:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_SITE_URL=https://your-railway-domain.railway.app
+   GOOGLE_AI_API_KEY=your_google_ai_api_key
+   ```
+
+4. **Configure Build & Deploy Settings**
+   
+   Railway should auto-detect Next.js. If not, ensure:
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Port**: `3000`
+
+5. **Get Your Production URL**
+   
+   After deployment completes:
+   - Your app will be available at a Railway-generated URL (e.g., `yourapp-production.railway.app`)
+   - Go to Railway Project Settings to set a custom domain if needed
+
+6. **Update OAuth Providers**
+   
+   Update your OAuth redirect URLs in each provider:
+   
+   **Google OAuth**:
+   - Go to Google Cloud Console > Credentials
+   - Add authorized redirect URI: `https://your-railway-domain.railway.app/auth/callback`
+
+   **GitHub OAuth**:
+   - Go to GitHub Settings > Developer settings > OAuth Apps
+   - Update Authorization callback URL: `https://your-railway-domain.railway.app/auth/callback`
+
+   **LinkedIn OAuth**:
+   - Update redirect URLs in LinkedIn Developers portal
+
+7. **Update Supabase Settings**
+   
+   In Supabase Dashboard:
+   - Go to Project Settings > Authentication > URL Configuration
+   - Set Site URL to: `https://your-railway-domain.railway.app`
+   - Add Redirect URL: `https://your-railway-domain.railway.app/auth/callback`
+
+8. **Deploy**
+   
+   - Push changes to GitHub
+   - Railway will automatically rebuild and redeploy
+   - Check deployment logs in Railway Dashboard
+
+#### Railway CLI Alternative (Optional)
+
+If you prefer using the CLI:
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login to Railway
+railway login
+
+# Create a new project
+railway init
+
+# Set environment variables
+railway variables set NEXT_PUBLIC_SUPABASE_URL=your_value
+railway variables set NEXT_PUBLIC_SUPABASE_ANON_KEY=your_value
+railway variables set NEXT_PUBLIC_SITE_URL=https://your-domain
+railway variables set GOOGLE_AI_API_KEY=your_value
+
+# Deploy
+railway up
+```
+
+#### Troubleshooting Railway Deployment
+
+- **Build fails**: Check Railway logs for errors. Ensure Node.js 18+ is available
+- **Env variables not loading**: Verify they're set in Railway Variables tab
+- **OAuth errors**: Ensure redirect URLs match exactly in provider settings
+- **Database connection errors**: Verify Supabase credentials are correct
+- **Cold starts**: Normal for Railway. Use a paid plan for faster cold starts
+
+### Vercel
 
 1. Push your code to GitHub
 2. Import project in [Vercel](https://vercel.com)
@@ -207,7 +314,6 @@ After logging in, users can:
 
 The app can be deployed to any platform that supports Next.js:
 - Netlify
-- Railway
 - AWS Amplify
 - Self-hosted
 
