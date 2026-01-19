@@ -9,8 +9,10 @@ import {
     Plus,
     Check,
     Lightbulb,
-    Loader2
+    Loader2,
+    Star
 } from 'lucide-react';
+import CVPreview from '@/components/cv/CVPreview';
 
 // Animated counter hook
 function useAnimatedCounter(target, duration = 1500) {
@@ -125,33 +127,62 @@ function StatCard({ icon: Icon, iconBg, label, value, badge, badgeColor, delay }
 function CVPreviewCard({ cv }) {
     return (
         <Link href={`/cv-builder?edit=${cv.id}`} className="cv-card">
-            <div className="cv-preview-card mb-4">
-                <div className="flex gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500/30 to-purple-500/30"></div>
-                    <div className="flex-1">
-                        <div className="cv-preview-mini-line w-20"></div>
-                        <div className="cv-preview-mini-line w-14" style={{ height: '4px' }}></div>
+            <div className={`cv-preview-card mb-4 relative overflow-hidden group ${cv.content ? 'p-0' : ''}`}>
+                {cv.is_primary && (
+                    <div className="absolute top-2 right-2 z-10">
+                        <span className="flex items-center gap-1 bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
+                            <Star className="w-2.5 h-2.5 fill-current" /> PRIMARY
+                        </span>
                     </div>
-                </div>
-                <div className="space-y-2">
-                    <div className="cv-preview-mini-line w-full"></div>
-                    <div className="cv-preview-mini-line w-5/6"></div>
-                    <div className="cv-preview-mini-line w-4/6"></div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
-                    <div className="cv-preview-mini-line w-3/4"></div>
-                    <div className="cv-preview-mini-line w-full"></div>
-                    <div className="cv-preview-mini-line w-2/3"></div>
-                </div>
+                )}
+                {cv.content ? (
+                    <div className="absolute inset-0 scale-[0.25] origin-top-left w-[400%] h-[400%] pointer-events-none transition-transform duration-500 group-hover:scale-[0.27]">
+                        <CVPreview 
+                            cvData={cv.content} 
+                            templateId={cv.template || 'modern'} 
+                            resumeSettings={cv.content?._settings || {}}
+                            sectionOrder={cv.content?._sectionOrder || []}
+                            paperSize={cv.content?._settings?.paperSize || 'letter'}
+                            scale={1}
+                        />
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500/30 to-purple-500/30"></div>
+                            <div className="flex-1">
+                                <div className="cv-preview-mini-line w-20"></div>
+                                <div className="cv-preview-mini-line w-14" style={{ height: '4px' }}></div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="cv-preview-mini-line w-full"></div>
+                            <div className="cv-preview-mini-line w-5/6"></div>
+                            <div className="cv-preview-mini-line w-4/6"></div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+                            <div className="cv-preview-mini-line w-3/4"></div>
+                            <div className="cv-preview-mini-line w-full"></div>
+                            <div className="cv-preview-mini-line w-2/3"></div>
+                        </div>
+                    </>
+                )}
+                
+                {/* Overlay for better readability of the card title below */}
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent pointer-events-none"></div>
             </div>
             <div className="flex items-center justify-between">
                 <div>
-                    <h4 className="font-medium text-sm">{cv.title || 'Untitled CV'}</h4>
+                    <h4 className="font-medium text-sm truncate max-w-[120px]">{cv.title || 'Untitled CV'}</h4>
                     <p className="text-xs text-gray-400">
-                        Created {new Date(cv.created_at).toLocaleDateString()}
+                        {cv.updated_at ? `Updated ${new Date(cv.updated_at).toLocaleDateString()}` : `Created ${new Date(cv.created_at).toLocaleDateString()}`}
                     </p>
                 </div>
-                <span className="tag tag-success text-xs">92%</span>
+                {cv.ats_score !== undefined && cv.ats_score !== null && (
+                    <span className={`tag ${cv.ats_score >= 80 ? 'tag-success' : cv.ats_score >= 60 ? 'tag-warning' : 'tag-danger'} text-xs`}>
+                        {cv.ats_score}%
+                    </span>
+                )}
             </div>
         </Link>
     );
