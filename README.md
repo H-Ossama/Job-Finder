@@ -1,373 +1,161 @@
-# Job Finder & CV AI Assistant
+# 🚀 CareerForge.ai (Job Finder)
 
-A powerful AI-driven platform that helps job seekers create ATS-compliant CVs and automate their job search process. Built with Next.js, Supabase, and modern web technologies.
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-green?style=for-the-badge&logo=supabase)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 
-## ✨ Features
+CareerForge.ai is an advanced, AI-powered career management platform designed to revolutionize the job seeking experience. From building ATS-optimized resumes to automating job applications across multiple platforms, CareerForge.ai handles the heavy lifting of your job search.
 
-- 🔐 **Secure Authentication** - Email/password and OAuth (Google, GitHub, LinkedIn)
-- 📝 **AI-Powered CV Builder** - Create professional, ATS-compliant resumes
-- 🎯 **Smart Job Search** - AI-assisted job discovery and matching
-- 📊 **Application Tracking** - Monitor your job applications in one place
-- 🤖 **Automation Ready** - Integration with n8n for workflow automation
-- 🎨 **Modern UI** - Beautiful, responsive design with smooth animations
+---
+
+## 📸 Project Showcase
+
+### 🌐 Landing Page & Hero
+![Landing Page](screenshots/CareerForge-AI-—-Build-Your-Future-Automatically.png)
+
+### 📊 Professional Dashboard
+![Dashboard](screenshots/CareerForge-AI-—-Dashboard.png)
+
+### 🔍 Advanced Job Search
+![Job Search](screenshots/Job-Search-—-Job_Search.png)
+
+### 📝 AI CV Builder
+<p align="center">
+  <img src="screenshots/AI-CV-Builder-—-CV_Builder.png" width="45%" />
+  <img src="screenshots/My-Resumes-—-MyCV.png" width="45%" />
+</p>
+
+### 📈 Analytics & Insights
+![Analytics](screenshots/Analytics-—-Analystics.png)
+
+### 💡 Interview Preparation
+![Interview Prep](screenshots/CareerForge-AI-—-Interview.png)
+
+### ⚙️ Customizable Preferences
+![Settings](screenshots/Preferences-—-CareerForge-AI.png)
+
+### 💳 Flexible Pricing Plans
+![Pricing](screenshots/Billing-Job-Finder-Pro.png)
+
+---
+
+## ✨ Key Features
+
+### 🤖 AI-Powered CV Builder
+- **ATS Optimization**: Create resumes that pass automated screening systems.
+- **AI Content Generation**: Personalized bullet points and summaries based on your experience.
+- **Multiple Templates**: Choose from Modern, Creative, Executive, and Minimalist designs.
+- **PDF Export**: One-click download of your professionally formatted resume.
+
+### 🕵️ Global Job Search & Discovery
+- **Multi-Platform Search**: Aggregates jobs from 11+ major platforms.
+- **Advanced Filtering**: Filter by salary, location, job type, and experience level.
+- **Skills Matching**: Real-time analysis of how well you match specific job requirements.
+- **Smart Tracking**: Save jobs and track their application status effortlessly.
+
+### ⚡ Auto-Apply System (Pro)
+- **Automated Applications**: AI automatically generates personalized cover letters and applies to matching jobs.
+- **Batch Processing**: Set daily limits and minimum match scores for automated searching.
+- **Real-time Integration**: Connects with external APIs to handle the application flow.
+
+### 📊 Analytics & Tracking
+- **Application Funnel**: Track your progress from "Applied" to "Interviews" and "Offers".
+- **Skill Gap Analysis**: Visualizes your top skills and identifies areas for improvement.
+- **Weekly Progress**: Interactive charts showing your application activity over time.
+
+### 💬 Interview Preparation
+- **AI Mock Interviews**: Practice with role-specific questions.
+- **Behavioral & Technical Sets**: Categorized question banks with difficulty levels.
+- **Instant Feedback**: Get suggested improvements for your answers.
+
+---
 
 ## 🚀 Tech Stack
 
-- **Frontend**: Next.js 16, React 19
-- **Backend**: Next.js Server Actions
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth with OAuth
-- **Styling**: CSS Modules with custom design system
-- **Icons**: Lucide React
+- **Core**: [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://reactjs.org/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/), CSS Modules
+- **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL + RLS)
+- **AI Engine**: [Google Generative AI (Gemini)](https://ai.google.dev/) / Claude (via OpenRouter)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Data Visualization**: [Chart.js](https://www.chartjs.org/)
+- **Document Processing**: `html2canvas`, `jspdf`, `mammoth`, `pdf-parse`
 
-## 📋 Prerequisites
+---
 
-Before you begin, ensure you have:
+## 🛠️ Installation & Local Setup
 
-- Node.js 18+ installed
-- A Supabase account ([sign up here](https://supabase.com))
-- (Optional) OAuth provider accounts for social login
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/Job-Finder.git
+cd Job-Finder
+```
 
-## 🛠️ Installation
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd Job-Finder
-   ```
+### 3. Environment Configuration
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+GOOGLE_AI_API_KEY=your_gemini_api_key
+```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 4. Database Setup
+1. Create a new project in [Supabase](https://app.supabase.com).
+2. Run the SQL provided in `supabase_schema.sql` and the files in `migrations/` folder within the Supabase SQL Editor.
+3. Enable Email or Social Auth (Google, GitHub, LinkedIn) in the Auth settings.
 
-3. **Set up environment variables**
-   
-   Create a `.env.local` file in the root directory:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   NEXT_PUBLIC_SITE_URL=http://localhost:3000
-   ```
+### 5. Start Development
+```bash
+npm run dev
+```
 
-4. **Set up Supabase database**
-   
-   Run the SQL schema in your Supabase SQL Editor:
-   ```bash
-   # Copy the contents of supabase_schema.sql
-   # Paste into Supabase Dashboard > SQL Editor > New Query
-   # Execute the query
-   ```
-
-5. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 🔑 Supabase Setup
-
-### 1. Create a Supabase Project
-
-1. Go to [Supabase Dashboard](https://app.supabase.com)
-2. Click "New Project"
-3. Fill in your project details
-4. Wait for the project to be set up
-
-### 2. Get Your API Keys
-
-1. Go to Project Settings > API
-2. Copy your project URL and anon/public key
-3. Add them to your `.env.local` file
-
-### 3. Run Database Schema
-
-1. Open SQL Editor in your Supabase dashboard
-2. Copy the contents of `supabase_schema.sql`
-3. Paste and execute the query
-
-This will create:
-- `profiles` table - User profile information
-- `cvs` table - CV storage and management
-- `applications` table - Job application tracking
-- Row Level Security (RLS) policies
-
-### 4. Configure OAuth Providers (Optional)
-
-#### Google OAuth
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create a new project or select existing
-3. Enable Google+ API
-4. Go to Credentials > Create Credentials > OAuth 2.0 Client ID
-5. Add authorized redirect URIs:
-   ```
-   https://<your-project-ref>.supabase.co/auth/v1/callback
-   ```
-6. Copy Client ID and Client Secret
-7. In Supabase Dashboard > Authentication > Providers > Google:
-   - Enable Google provider
-   - Paste Client ID and Client Secret
-   - Save
-
-#### GitHub OAuth
-
-1. Go to GitHub Settings > Developer settings > OAuth Apps
-2. Click "New OAuth App"
-3. Fill in application details:
-   - Homepage URL: `http://localhost:3000` (or your production URL)
-   - Authorization callback URL: `https://<your-project-ref>.supabase.co/auth/v1/callback`
-4. Copy Client ID and generate Client Secret
-5. In Supabase Dashboard > Authentication > Providers > GitHub:
-   - Enable GitHub provider
-   - Paste Client ID and Client Secret
-   - Save
-
-#### LinkedIn OAuth
-
-1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/apps)
-2. Create a new app
-3. In the Auth tab, add redirect URLs:
-   ```
-   https://<your-project-ref>.supabase.co/auth/v1/callback
-   ```
-4. Copy Client ID and Client Secret
-5. In Supabase Dashboard > Authentication > Providers > LinkedIn (OIDC):
-   - Enable LinkedIn provider
-   - Paste Client ID and Client Secret
-   - Save
+---
 
 ## 📁 Project Structure
 
-```
-Job-Finder/
-├── app/
-│   ├── auth/
-│   │   └── callback/          # OAuth callback handler
-│   ├── dashboard/             # User dashboard
-│   ├── login/                 # Authentication pages
-│   │   ├── actions.js         # Server actions for auth
-│   │   ├── page.js            # Login UI
-│   │   └── login.module.css   # Login styles
-│   ├── globals.css            # Global styles & design system
-│   ├── layout.js              # Root layout
-│   └── page.js                # Landing page
-├── components/
-│   ├── Contact.js             # Contact section
-│   ├── Features.js            # Features showcase
-│   ├── Header.js              # Navigation header
-│   └── Hero.js                # Hero section
-├── utils/
-│   └── supabase/
-│       ├── client.js          # Client-side Supabase
-│       ├── middleware.js      # Middleware utilities
-│       └── server.js          # Server-side Supabase
-├── middleware.js              # Route protection
-├── supabase_schema.sql        # Database schema
-└── package.json
-```
+- `app/`: Next.js App Router pages and API routes.
+- `components/`: Reusable React components (UI, Landing, Dashboard, CV).
+- `hooks/`: Custom React hooks for data fetching and state management.
+- `utils/`: Helper functions, Supabase configuration, and AI logic.
+- `migrations/`: SQL scripts for database schema updates.
+- `public/`: Static assets and icons.
 
-## 🎯 Usage
-
-### Authentication
-
-- **Sign Up**: Create a new account with email/password
-- **Log In**: Use email/password or OAuth providers
-- **OAuth**: Click Google, GitHub, or LinkedIn buttons for social login
-
-### Dashboard
-
-After logging in, users can:
-- Create and manage CVs
-- Search for jobs
-- Track applications
-- Update profile settings
-
-## 🔒 Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Yes |
-| `NEXT_PUBLIC_SITE_URL` | Your site URL (for OAuth redirects) | Yes |
-| `GOOGLE_AI_API_KEY` | Google AI API key for CV generation (get from [Google AI Studio](https://makersuite.google.com/app/apikey)) | Yes (for CV Builder) |
-
+---
 
 ## 🚢 Deployment
 
 ### Railway (Recommended)
-
-Railway is a modern platform for deploying web applications with minimal configuration.
-
-#### Prerequisites
-- Railway account ([sign up here](https://railway.app))
-- GitHub repository with your code
-
-#### Step-by-Step Guide
-
-1. **Push to GitHub**
-   ```bash
-   git add .
-   git commit -m "Ready for Railway deployment"
-   git push origin main
-   ```
-
-2. **Connect Railway to GitHub**
-   - Go to [Railway Dashboard](https://railway.app/dashboard)
-   - Click "New Project"
-   - Select "Deploy from GitHub repo"
-   - Authorize Railway to access your GitHub account
-   - Select your Job-Finder repository
-
-3. **Configure Environment Variables**
-   
-   In Railway Dashboard, go to Variables and add:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   NEXT_PUBLIC_SITE_URL=https://your-railway-domain.railway.app
-   GOOGLE_AI_API_KEY=your_google_ai_api_key
-   ```
-
-4. **Configure Build & Deploy Settings**
-   
-   Railway should auto-detect Next.js. If not, ensure:
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-   - **Port**: `3000`
-
-5. **Get Your Production URL**
-   
-   After deployment completes:
-   - Your app will be available at a Railway-generated URL (e.g., `yourapp-production.railway.app`)
-   - Go to Railway Project Settings to set a custom domain if needed
-
-6. **Update OAuth Providers**
-   
-   Update your OAuth redirect URLs in each provider:
-   
-   **Google OAuth**:
-   - Go to Google Cloud Console > Credentials
-   - Add authorized redirect URI: `https://your-railway-domain.railway.app/auth/callback`
-
-   **GitHub OAuth**:
-   - Go to GitHub Settings > Developer settings > OAuth Apps
-   - Update Authorization callback URL: `https://your-railway-domain.railway.app/auth/callback`
-
-   **LinkedIn OAuth**:
-   - Update redirect URLs in LinkedIn Developers portal
-
-7. **Update Supabase Settings**
-   
-   In Supabase Dashboard:
-   - Go to Project Settings > Authentication > URL Configuration
-   - Set Site URL to: `https://your-railway-domain.railway.app`
-   - Add Redirect URL: `https://your-railway-domain.railway.app/auth/callback`
-
-8. **Deploy**
-   
-   - Push changes to GitHub
-   - Railway will automatically rebuild and redeploy
-   - Check deployment logs in Railway Dashboard
-
-#### Railway CLI Alternative (Optional)
-
-If you prefer using the CLI:
-
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login to Railway
-railway login
-
-# Create a new project
-railway init
-
-# Set environment variables
-railway variables set NEXT_PUBLIC_SUPABASE_URL=your_value
-railway variables set NEXT_PUBLIC_SUPABASE_ANON_KEY=your_value
-railway variables set NEXT_PUBLIC_SITE_URL=https://your-domain
-railway variables set GOOGLE_AI_API_KEY=your_value
-
-# Deploy
-railway up
-```
-
-#### Troubleshooting Railway Deployment
-
-- **Build fails**: Check Railway logs for errors. Ensure Node.js 18+ is available
-- **Env variables not loading**: Verify they're set in Railway Variables tab
-- **OAuth errors**: Ensure redirect URLs match exactly in provider settings
-- **Database connection errors**: Verify Supabase credentials are correct
-- **Cold starts**: Normal for Railway. Use a paid plan for faster cold starts
+1. Link your GitHub repo to [Railway](https://railway.app/).
+2. Add your environment variables in the Railway dashboard.
+3. Railway will automatically detect the Next.js build and deploy your app.
 
 ### Vercel
-
-1. Push your code to GitHub
-2. Import project in [Vercel](https://vercel.com)
-3. Add environment variables
-4. Deploy
-
-### Other Platforms
-
-The app can be deployed to any platform that supports Next.js:
-- Netlify
-- AWS Amplify
-- Self-hosted
-
-**Important**: Update `NEXT_PUBLIC_SITE_URL` to your production URL and update OAuth redirect URLs in provider settings.
-
-## 🧪 Development
-
-```bash
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Run linter
-npm run lint
-```
-
-## 🐛 Troubleshooting
-
-### OAuth Not Working
-
-- Verify redirect URLs match exactly in provider settings
-- Check that OAuth providers are enabled in Supabase
-- Ensure `NEXT_PUBLIC_SITE_URL` is set correctly
-- Clear browser cache and cookies
-
-### Database Errors
-
-- Verify `supabase_schema.sql` was executed successfully
-- Check RLS policies are enabled
-- Ensure API keys are correct in `.env.local`
-
-### Build Errors
-
-- Delete `.next` folder and `node_modules`
-- Run `npm install` again
-- Clear npm cache: `npm cache clean --force`
-
-## 📝 License
-
-ISC
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📧 Support
-
-For issues and questions, please open an issue on GitHub.
+1. Import the project to [Vercel](https://vercel.com/).
+2. Configure environment variables.
+3. **Deploy!**
 
 ---
 
-Built with ❤️ using Next.js and Supabase
+## 🔒 License
+
+This project is licensed under the **ISC License**.
+
+## 🤝 Contributing
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+Built with ❤️ by [H_Oussama](https://github.com/H_Oussama)
